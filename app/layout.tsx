@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
+
 const notoSans = Noto_Sans({
   subsets: ["devanagari", "latin"],
   variable: "--font-devanagari",
@@ -13,6 +14,8 @@ export const metadata: Metadata = {
   title: {
     default: "प्रश्न",
     template: "%s | प्रश्न",
+
+   
   },
 
   description:
