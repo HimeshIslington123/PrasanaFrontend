@@ -4,7 +4,7 @@ import ArticlePage from "../components/ArticlePage";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 console.log("API BASE:", API_BASE);
 async function getNews() {
-  const response = await axios.get(`${API_BASE}/news/6`);
+  const response = await axios.get(`${API_BASE}/news/5`);
   return response.data;
 }
 
