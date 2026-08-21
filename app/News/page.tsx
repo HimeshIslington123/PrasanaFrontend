@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 async function getNews() {
-  const response = await axios.get(`${API_BASE}/news/5`);
+  const response = await axios.get(`${API_BASE}/news/7`);
   return response.data;
 }
 
