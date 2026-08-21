@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { User, Lock, Eye, EyeOff } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+
+export default function LoginPage() {
+    
+  const [showPassword, setShowPassword] = useState(false);
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+   const handleGoogleLogin = () => {
+    window.location.href = `${API_BASE}/Authencation/google`;
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-[var(--background)] flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[420px] bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl shadow-sm px-7 py-8 sm:px-9 sm:py-10">
+        {/* Header */}
+        <div className="flex flex-col items-center mb-6">
+          <Image
+            src="/logo.png"
+            alt="प्रश्न"
+            width={140}
+            height={48}
+            className="h-10 w-auto mb-5"
+            priority
+          />
+          <h1 className="text-2xl font-bold text-[var(--on-surface)] text-center">
+            लगइन गर्नुहोस्
+          </h1>
+          <p className="text-[var(--secondary)] text-center mt-2 text-[15px]">
+            आफ्नो खातामा प्रवेश गर्न विवरण भर्नुहोस्।
+          </p>
+        </div>
+
+        {/* Form */}
+        <form className="flex flex-col gap-5">
+          {/* Email / Username */}
+          <div>
+            <label
+              htmlFor="identifier"
+              className="block text-sm font-bold text-[var(--on-surface)] mb-2"
+            >
+              इमेल वा प्रयोगकर्ता नाम
+            </label>
+            <div className="relative">
+              <User
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--secondary)]"
+                size={18}
+              />
+              <input
+                id="identifier"
+                type="text"
+                placeholder="तपाईंको इमेल..."
+                className="w-full bg-[var(--surface-container-low)] rounded-lg py-3 pl-10 pr-3 text-[15px] text-[var(--on-surface)] placeholder:text-[var(--secondary)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label
+                htmlFor="password"
+                className="text-sm font-bold text-[var(--on-surface)]"
+              >
+                पासवर्ड
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-sm font-semibold text-[var(--primary)] hover:underline"
+              >
+                पासवर्ड बिर्सनुभयो?
+              </Link>
+            </div>
+            <div className="relative">
+              <Lock
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--secondary)]"
+                size={18}
+              />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="w-full bg-[var(--surface-container-low)] rounded-lg py-3 pl-10 pr-10 text-[15px] text-[var(--on-surface)] placeholder:text-[var(--secondary)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--secondary)]"
+                aria-label={
+                  showPassword ? "पासवर्ड लुकाउनुहोस्" : "पासवर्ड देखाउनुहोस्"
+                }
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-[var(--primary)] text-[var(--on-primary)] font-semibold rounded-lg py-3 text-[15px] hover:bg-[var(--primary-container)] transition-colors"
+          >
+            लगइन
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 my-6">
+          <div className="h-px flex-1 bg-[var(--outline-variant)]" />
+          <span className="text-sm text-[var(--secondary)]">वा</span>
+          <div className="h-px flex-1 bg-[var(--outline-variant)]" />
+        </div>
+
+        {/* Google */}
+        <button
+      type="button"
+      onClick={handleGoogleLogin}
+      className="w-full flex items-center justify-center gap-3 border border-[var(--outline-variant)] rounded-lg py-3 text-[var(--on-surface)] font-semibold text-[15px] hover:bg-[var(--surface-container-low)] transition-colors"
+    >
+      <FcGoogle size={20} />
+      Google मार्फत लगइन
+    </button>
+
+        <p className="text-center text-sm text-[var(--on-surface)] mt-6">
+          खाता छैन?{" "}
+          <Link
+            href="/register"
+            className="font-bold text-[var(--primary)] hover:underline"
+          >
+            यहाँ साइन अप गर्नुहोस्
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
