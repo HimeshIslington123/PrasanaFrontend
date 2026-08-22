@@ -44,7 +44,7 @@ export default function NewsPage() {
   }, []);
 
   const openNews = (id: number) => {
-    router.push(`/news/${id}`);
+    router.push(`/News/${id}`);
   };
 
   const formatTime = (date: string) => {

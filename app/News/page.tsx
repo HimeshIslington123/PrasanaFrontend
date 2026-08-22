@@ -31,7 +31,7 @@ export default function NewsPage() {
     const getNews = async () => {
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/news`
+          `${process.env.NEXT_PUBLIC_API_URL}/news`,
         );
 
         setNews(response.data);
@@ -64,9 +64,7 @@ export default function NewsPage() {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
         <div className="mx-auto max-w-[1280px]">
-          <p className="text-center">
-            समाचार लोड हुँदैछ...
-          </p>
+          <p className="text-center">समाचार लोड हुँदैछ...</p>
         </div>
       </main>
     );
@@ -76,9 +74,7 @@ export default function NewsPage() {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
         <div className="mx-auto max-w-[1280px]">
-          <p className="text-center">
-            कुनै समाचार भेटिएन।
-          </p>
+          <p className="text-center">कुनै समाचार भेटिएन।</p>
         </div>
       </main>
     );
@@ -89,9 +85,7 @@ export default function NewsPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-
         {/* CATEGORY */}
 
         <div className="mb-7">
@@ -122,11 +116,9 @@ export default function NewsPage() {
             lg:grid-cols-[minmax(0,2fr)_270px]
           "
         >
-
           {/* LEFT */}
 
           <div>
-
             {/* FEATURED NEWS */}
 
             <article
@@ -141,7 +133,6 @@ export default function NewsPage() {
                 hover:shadow-md
               "
             >
-
               <div
                 className="
                   relative
@@ -151,7 +142,6 @@ export default function NewsPage() {
                   bg-gray-100
                 "
               >
-
                 <Image
                   src={featuredNews.image}
                   alt={featuredNews.title}
@@ -168,11 +158,9 @@ export default function NewsPage() {
                     hover:scale-105
                   "
                 />
-
               </div>
 
               <div className="p-5 sm:p-6">
-
                 <span
                   className="
                     inline-block
@@ -226,13 +214,9 @@ export default function NewsPage() {
                 >
                   <Clock size={13} />
 
-                  <span>
-                    {formatTime(featuredNews.created)}
-                  </span>
+                  <span>{formatTime(featuredNews.created)}</span>
                 </div>
-
               </div>
-
             </article>
 
             {/* OTHER NEWS */}
@@ -246,9 +230,7 @@ export default function NewsPage() {
                 sm:grid-cols-2
               "
             >
-
               {gridNews.map((item) => (
-
                 <article
                   key={item.id}
                   onClick={() => openNews(item.id)}
@@ -263,7 +245,6 @@ export default function NewsPage() {
                     hover:shadow-md
                   "
                 >
-
                   <div
                     className="
                       relative
@@ -273,7 +254,6 @@ export default function NewsPage() {
                       bg-gray-100
                     "
                   >
-
                     <Image
                       src={item.image}
                       alt={item.title}
@@ -290,11 +270,9 @@ export default function NewsPage() {
                         hover:scale-105
                       "
                     />
-
                   </div>
 
                   <div className="p-4">
-
                     <h3
                       className="
                         line-clamp-2
@@ -319,17 +297,11 @@ export default function NewsPage() {
                     >
                       <Clock size={13} />
 
-                      <span>
-                        {formatTime(item.created)}
-                      </span>
+                      <span>{formatTime(item.created)}</span>
                     </div>
-
                   </div>
-
                 </article>
-
               ))}
-
             </div>
 
             {/* PAGINATION */}
@@ -346,7 +318,6 @@ export default function NewsPage() {
                 pt-5
               "
             >
-
               <button className="flex h-9 w-9 items-center justify-center border">
                 <ChevronLeft size={16} />
               </button>
@@ -364,30 +335,21 @@ export default function NewsPage() {
                 1
               </button>
 
-              <button className="h-9 w-9 border">
-                2
-              </button>
+              <button className="h-9 w-9 border">2</button>
 
-              <button className="h-9 w-9 border">
-                3
-              </button>
+              <button className="h-9 w-9 border">3</button>
 
-              <span className="px-2">
-                ...
-              </span>
+              <span className="px-2">...</span>
 
               <button className="flex h-9 w-9 items-center justify-center border">
                 <ChevronRight size={16} />
               </button>
-
             </div>
-
           </div>
 
           {/* RIGHT SIDEBAR */}
 
           <aside className="space-y-6">
-
             {/* POPULAR */}
 
             <section
@@ -398,7 +360,6 @@ export default function NewsPage() {
                 p-4
               "
             >
-
               <h2
                 className="
                   border-b
@@ -412,9 +373,7 @@ export default function NewsPage() {
               </h2>
 
               <div>
-
                 {news.slice(0, 5).map((item, index) => (
-
                   <div
                     key={item.id}
                     onClick={() => openNews(item.id)}
@@ -425,7 +384,6 @@ export default function NewsPage() {
                       py-4
                     "
                   >
-
                     <h3
                       className="
                         line-clamp-2
@@ -441,13 +399,9 @@ export default function NewsPage() {
                     <p className="mt-1 text-[10px] text-gray-500">
                       {index + 1} दिन अघि
                     </p>
-
                   </div>
-
                 ))}
-
               </div>
-
             </section>
 
             {/* NEWSLETTER */}
@@ -461,15 +415,9 @@ export default function NewsPage() {
                 text-center
               "
             >
+              <Mail className="mx-auto text-[#6d001b]" size={25} />
 
-              <Mail
-                className="mx-auto text-[#6d001b]"
-                size={25}
-              />
-
-              <h2 className="mt-3 text-xl font-bold">
-                न्यूजलेटर
-              </h2>
+              <h2 className="mt-3 text-xl font-bold">न्यूजलेटर</h2>
 
               <p className="mt-2 text-xs leading-5 text-gray-600">
                 राजनीतिका हर अहम खबर सीधै अपने इनबक्स में पाएं।
@@ -504,15 +452,10 @@ export default function NewsPage() {
               >
                 सदस्यता लिने
               </button>
-
             </section>
-
           </aside>
-
         </div>
-
       </div>
-
     </main>
   );
 }

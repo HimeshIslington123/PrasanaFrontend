@@ -1,7 +1,6 @@
 import ArticlePage from "@/app/components/ArticlePage";
 import type { Metadata } from "next";
 
-
 type News = {
   id: number;
   title: string;
@@ -9,6 +8,10 @@ type News = {
   categoryname: string;
   created: string;
   image: string;
+
+  caption?: string | null;
+  pullQuote?: string | null;
+
   comments:
     | {
         newsId: number;
@@ -20,7 +23,7 @@ type News = {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 async function getNews(id: string): Promise<News> {
-  const response = await fetch(`${API_BASE}/news/${id}`, {
+  const response = await fetch(`${API_BASE}/News/${id}`, {
     cache: "no-store",
   });
 
@@ -34,7 +37,6 @@ async function getNews(id: string): Promise<News> {
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
-
   const { id } = await params;
 
   const news = await getNews(id);
@@ -70,6 +72,7 @@ export async function generateMetadata(
       card: "summary_large_image",
       title: news.title,
       description,
+
       images: news.image
         ? [news.image]
         : [],
@@ -80,7 +83,6 @@ export async function generateMetadata(
 export default async function NewsDetailPage(
   { params }: { params: Promise<{ id: string }> }
 ) {
-
   const { id } = await params;
 
   const news = await getNews(id);
@@ -89,11 +91,12 @@ export default async function NewsDetailPage(
     <ArticlePage
       id={news.id}
       title={news.title}
-         paragraphs={news.content?.split("\n").filter(Boolean)}
-
+      paragraphs={news.content?.split("\n").filter(Boolean)}
       category={news.categoryname}
       publishedAt={news.created}
       heroImageSrc={news.image}
+      caption={news.caption}
+      pullQuote={news.pullQuote}
       comments={news.comments ?? []}
     />
   );

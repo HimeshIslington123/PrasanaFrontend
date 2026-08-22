@@ -4,10 +4,12 @@ import Image from "next/image";
 import { Share2, Bookmark, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 type ArticlePageProps = {
   id: number;
   title: string;
+
   category?: string;
   breadcrumb?: string[];
 
@@ -18,10 +20,14 @@ type ArticlePageProps = {
 
   heroImageSrc?: string;
   heroImageAlt?: string;
-  heroCaption?: string;
+
+  // API can return null
+  caption?: string | null;
 
   paragraphs?: string[];
-  pullQuote?: string;
+
+  // API can return null
+  pullQuote?: string | null;
 
   comments?: {
     newsId: number;
@@ -44,10 +50,11 @@ export default function ArticlePage({
 
   heroImageSrc,
   heroImageAlt = "",
-  heroCaption = "",
+
+  caption = null,
 
   paragraphs = [],
-  pullQuote = "",
+  pullQuote = null,
 
   comments: initialComments = [],
 }: ArticlePageProps) {
@@ -60,6 +67,8 @@ export default function ArticlePage({
   // List of existing comments
   const [comments, setComments] = useState(initialComments);
 
+  const router = useRouter();
+
   // ============================================================
   // ADD COMMENT
   // ============================================================
@@ -69,7 +78,7 @@ export default function ArticlePage({
 
     try {
       const response = await axios.post(
-     `${process.env.NEXT_PUBLIC_API_URL}/api/Comment`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/Comment`,
         {
           Content: comment,
           NewsId: id,
@@ -78,16 +87,23 @@ export default function ArticlePage({
           headers: {
             "Content-Type": "application/json",
           },
-        },
+          withCredentials: true,
+        }
       );
 
-      // Add newly-created comment to existing comments
-      setComments((prevComments) => [...prevComments, response.data]);
+      setComments((prevComments) => [
+        ...prevComments,
+        response.data,
+      ]);
 
-      // Clear textarea
       setComment("");
-    } catch (error) {
-      console.error("Failed to add comment:", error);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        router.push("/Login");
+        return;
+      }
+
+      console.error(error);
     }
   };
 
@@ -98,24 +114,38 @@ export default function ArticlePage({
   const handleId = async (id: number) => {
     try {
       if (!isBookmarked) {
-        await axios.post(  `${process.env.NEXT_PUBLIC_API_URL}/bookmark`, id, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/bookmark`,
+          id,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
 
         setIsBookmarked(true);
       } else {
-        await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/bookmark`, {
-          data: id,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_API_URL}/bookmark`,
+          {
+            data: id,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
 
         setIsBookmarked(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+
       console.error(error);
     }
   };
@@ -127,7 +157,12 @@ export default function ArticlePage({
   useEffect(() => {
     const checkBookmark = async () => {
       try {
-        const res = await axios.get( `${process.env.NEXT_PUBLIC_API_URL}/bookmark/${id}`);
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/bookmark/${id}`,
+          {
+            withCredentials: true,
+          }
+        );
 
         setIsBookmarked(res.data);
       } catch (error) {
@@ -144,6 +179,7 @@ export default function ArticlePage({
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
+
       {/* ========================================================
           MAIN PAGE CONTAINER
       ========================================================= */}
@@ -158,15 +194,9 @@ export default function ArticlePage({
           lg:px-8
         "
       >
+
         {/* ======================================================
             GRID
-
-            DESKTOP:
-            2fr = Article
-            320px = Ads
-
-            MOBILE:
-            One column
         ======================================================= */}
 
         <div
@@ -178,6 +208,7 @@ export default function ArticlePage({
             lg:gap-10
           "
         >
+
           {/* ====================================================
               LEFT SIDE - ARTICLE
           ===================================================== */}
@@ -195,6 +226,7 @@ export default function ArticlePage({
               lg:py-10
             "
           >
+
             {/* ==================================================
                 BREADCRUMB
             =================================================== */}
@@ -214,7 +246,10 @@ export default function ArticlePage({
               "
             >
               {breadcrumb.map((item, index) => (
-                <div key={item} className="flex shrink-0 items-center">
+                <div
+                  key={`${item}-${index}`}
+                  className="flex shrink-0 items-center"
+                >
                   <span
                     className={
                       index === breadcrumb.length - 1
@@ -241,6 +276,7 @@ export default function ArticlePage({
             =================================================== */}
 
             <header className="max-w-[900px]">
+
               {/* Category */}
 
               {category && (
@@ -279,6 +315,7 @@ export default function ArticlePage({
               >
                 {title}
               </h1>
+
             </header>
 
             {/* ==================================================
@@ -296,9 +333,11 @@ export default function ArticlePage({
                 py-4
               "
             >
+
               {/* Author */}
 
               <div className="flex items-center gap-3">
+
                 {/* Author Image */}
 
                 {authorImageSrc ? (
@@ -336,6 +375,7 @@ export default function ArticlePage({
                 {/* Author Information */}
 
                 <div className="leading-tight">
+
                   <p
                     className="
                       font-[family-name:var(--font-devanagari)]
@@ -372,12 +412,15 @@ export default function ArticlePage({
                       {publishedAt}
                     </p>
                   )}
+
                 </div>
+
               </div>
 
               {/* Share / Bookmark */}
 
               <div className="flex items-center gap-1">
+
                 {/* Share */}
 
                 <button
@@ -422,7 +465,9 @@ export default function ArticlePage({
                     }
                   />
                 </button>
+
               </div>
+
             </div>
 
             {/* ==================================================
@@ -430,10 +475,12 @@ export default function ArticlePage({
             =================================================== */}
 
             <div className="mt-7 max-w-[900px]">
+
               {/* HERO IMAGE */}
 
               {heroImageSrc && (
                 <figure>
+
                   <div
                     className="
                       relative
@@ -457,9 +504,9 @@ export default function ArticlePage({
                     />
                   </div>
 
-                  {/* Caption */}
+                  {/* IMAGE CAPTION */}
 
-                  {heroCaption && (
+                  {caption && (
                     <figcaption
                       className="
                         mt-2
@@ -486,9 +533,13 @@ export default function ArticlePage({
                         "
                       />
 
-                      <span>{heroCaption}</span>
+                      <span>
+                        {caption}
+                      </span>
+
                     </figcaption>
                   )}
+
                 </figure>
               )}
 
@@ -508,19 +559,19 @@ export default function ArticlePage({
                   sm:leading-[1.9]
                 "
               >
+
                 {paragraphs.map((paragraph, index) => (
                   <p
                     key={index}
-                    className="
-                      mb-7
-                      last:mb-0
-                    "
+                    className="mb-7 last:mb-0"
                   >
                     {paragraph}
                   </p>
                 ))}
 
-                {/* Pull Quote */}
+                {/* ==================================================
+                    PULL QUOTE
+                =================================================== */}
 
                 {pullQuote && (
                   <blockquote
@@ -549,7 +600,9 @@ export default function ArticlePage({
                     </p>
                   </blockquote>
                 )}
+
               </div>
+
             </div>
 
             {/* ==================================================
@@ -565,6 +618,7 @@ export default function ArticlePage({
                 pt-8
               "
             >
+
               <h2
                 className="
                   mb-6
@@ -580,6 +634,7 @@ export default function ArticlePage({
               {/* ADD COMMENT */}
 
               <div className="mb-8">
+
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
@@ -602,6 +657,7 @@ export default function ArticlePage({
                 />
 
                 <div className="mt-3 flex justify-end">
+
                   <button
                     type="button"
                     onClick={handleComment}
@@ -619,12 +675,15 @@ export default function ArticlePage({
                   >
                     टिप्पणी पठाउनुहोस्
                   </button>
+
                 </div>
+
               </div>
 
               {/* COMMENTS LIST */}
 
               <div className="space-y-5">
+
                 {comments.length === 0 ? (
                   <p
                     className="
@@ -638,14 +697,16 @@ export default function ArticlePage({
                 ) : (
                   comments.map((item, index) => (
                     <div
-                      key={index}
+                      key={`${item.newsId}-${index}`}
                       className="
                         border-b
                         border-[var(--outline-variant)]
                         pb-5
                       "
                     >
+
                       <div className="flex items-start gap-3">
+
                         {/* User Avatar */}
 
                         <div
@@ -668,6 +729,7 @@ export default function ArticlePage({
                         {/* Comment */}
 
                         <div>
+
                           <p
                             className="
                               font-[family-name:var(--font-devanagari)]
@@ -687,35 +749,32 @@ export default function ArticlePage({
                           >
                             {item.content}
                           </p>
+
                         </div>
+
                       </div>
+
                     </div>
                   ))
                 )}
+
               </div>
+
             </section>
+
           </article>
+
 
           {/* ====================================================
               RIGHT SIDE - ADS
           ===================================================== */}
 
-          <aside
-            className="
-              
-              lg:block
-              lg:pt-10
-            "
-          >
-            {/* Advertisement 1 */}
+          <aside className="lg:block lg:pt-10">
 
-            <div
-              className="
-                sticky
-                top-2
-                space-y-6
-              "
-            >
+            <div className="sticky top-2 space-y-6">
+
+              {/* Advertisement 1 */}
+
               <div className="relative w-full overflow-hidden">
                 <Image
                   src="/ad1.png"
@@ -740,13 +799,8 @@ export default function ArticlePage({
 
               {/* Advertisement 3 */}
 
-              <div
-                className="
-                  
-                  relative w-full overflow-hidden
-                "
-              >
-               <Image
+              <div className="relative w-full overflow-hidden">
+                <Image
                   src="/ad3.png"
                   alt="विज्ञापन"
                   width={400}
@@ -754,10 +808,15 @@ export default function ArticlePage({
                   className="h-auto w-full object-cover"
                 />
               </div>
+
             </div>
+
           </aside>
+
         </div>
+
       </div>
+
     </main>
   );
 }
