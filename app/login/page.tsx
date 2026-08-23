@@ -38,9 +38,9 @@ const router=useRouter();
           withCredentials: true,
         }
       );
-//router.back();
-      console.log("Login successful:", response.data);
 
+      console.log("Login successful:", response.data);
+router.push("/admin/article");
    
 
     } catch (error: any) {
