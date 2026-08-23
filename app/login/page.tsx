@@ -48,10 +48,10 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         withCredentials: true,
       }
     );
-
+alert(JSON.stringify(cookieCheck.data));
     console.log("COOKIE CHECK:", cookieCheck.data);
 
-    router.push("/admin/article");
+    //router.push("/admin/article");
 
   } catch (error: any) {
     console.error("Login error:", error);
