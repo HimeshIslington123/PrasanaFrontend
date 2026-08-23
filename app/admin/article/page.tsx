@@ -33,7 +33,7 @@ export default function ArticleEditor() {
   const [message, setMessage] = useState("");
 
   /*
-   * ================= GET CATEGORIES =================
+   * Get categories
    */
   useEffect(() => {
     const getCategories = async () => {
@@ -55,7 +55,7 @@ export default function ArticleEditor() {
   }, []);
 
   /*
-   * ================= GENERATE SLUG =================
+   * Generate slug from title
    */
   const generateSlug = (value: string) => {
     return value
@@ -67,7 +67,7 @@ export default function ArticleEditor() {
   };
 
   /*
-   * ================= TITLE CHANGE =================
+   * Title change
    */
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -78,7 +78,7 @@ export default function ArticleEditor() {
   };
 
   /*
-   * ================= IMAGE CHANGE =================
+   * Image change
    */
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -91,7 +91,7 @@ export default function ArticleEditor() {
   };
 
   /*
-   * ================= PUBLISH NEWS =================
+   * Publish news
    */
   const handlePublish = async () => {
     setMessage("");
@@ -134,8 +134,16 @@ export default function ArticleEditor() {
         formData.append("HeroImageSrc", heroImageSrc);
       }
 
-      console.log("Publishing news...");
-      console.log("API:", `${API_BASE}/News`);
+      /*
+       * Your current NewsDto does not contain these fields,
+       * so they are NOT sent to the backend.
+       *
+       * If you later add them to NewsDto, uncomment:
+       *
+       * formData.append("Slug", slug);
+       * formData.append("MetaDescription", metaDescription);
+       * formData.append("Tags", tags);
+       */
 
       const response = await axios.post(
         `${API_BASE}/News`,
@@ -145,12 +153,12 @@ export default function ArticleEditor() {
         }
       );
 
-      console.log("Publish successful:", response.data);
+      console.log(response.data);
 
       setMessage("News has been published successfully.");
 
       /*
-       * ================= CLEAR FORM =================
+       * Clear form
        */
       setTitle("");
       setContent("");
@@ -162,57 +170,15 @@ export default function ArticleEditor() {
       setSlug("");
       setMetaDescription("");
 
-    } catch (error: unknown) {
-      console.error("FULL PUBLISH ERROR:", error);
+    } catch (error: any) {
+      console.error("Publish error:", error);
 
-      /*
-       * ================= AXIOS ERROR =================
-       */
-      if (axios.isAxiosError(error)) {
-        console.error("Error message:", error.message);
-        console.error("Status:", error.response?.status);
-        console.error("Response data:", error.response?.data);
-        console.error("Response headers:", error.response?.headers);
-
-        if (error.response) {
-          const status = error.response.status;
-          const data = error.response.data;
-
-          let errorText = "";
-
-          if (typeof data === "string") {
-            errorText = data;
-          } else if (data?.message) {
-            errorText = data.message;
-          } else if (data?.title) {
-            errorText = data.title;
-          } else {
-            try {
-              errorText = JSON.stringify(data);
-            } catch {
-              errorText = "Unknown server error";
-            }
-          }
-
-          setMessage(
-            `Server Error (${status}): ${errorText}`
-          );
-        } else if (error.request) {
-          /*
-           * Request was sent but no response came back
-           */
-          setMessage(
-            `No response from server. ${error.message}`
-          );
-        } else {
-          setMessage(
-            `Request Error: ${error.message}`
-          );
-        }
-      } else if (error instanceof Error) {
-        setMessage(`Error: ${error.message}`);
+      if (error.response) {
+        setMessage(
+          error.response.data || "Failed to publish news."
+        );
       } else {
-        setMessage("Unknown error occurred.");
+        setMessage("Failed to connect to the server.");
       }
     } finally {
       setPublishing(false);
@@ -221,30 +187,47 @@ export default function ArticleEditor() {
 
   return (
     <div className="min-h-screen bg-[#1a1c1c]">
+
       <div className="mx-auto max-w-[1200px]">
 
         {/* ================= TOP NAV ================= */}
 
         <div className="flex h-[70px] items-center justify-between border-b border-[#e2beba] bg-white px-6">
+
           <div className="flex items-center gap-8">
+
             <h1 className="text-2xl font-bold text-[#8f000d]">
               प्रश्न Editor
             </h1>
 
             <nav className="flex items-center gap-7 text-sm font-medium text-[#5a403e]">
-              <span>Dashboard</span>
+
+              <span>
+                Dashboard
+              </span>
 
               <span className="border-b-2 border-[#8f000d] pb-5 text-[#8f000d]">
                 Articles
               </span>
 
-              <span>Media</span>
-              <span>Analytics</span>
-              <span>Users</span>
+              <span>
+                Media
+              </span>
+
+              <span>
+                Analytics
+              </span>
+
+              <span>
+                Users
+              </span>
+
             </nav>
+
           </div>
 
           <div className="flex items-center gap-3">
+
             <button
               type="button"
               className="px-4 py-2 text-sm text-[#5a403e]"
@@ -267,12 +250,16 @@ export default function ArticleEditor() {
             >
               {publishing ? "Publishing..." : "Publish"}
             </button>
+
           </div>
+
         </div>
+
 
         {/* ================= MAIN ================= */}
 
         <div className="grid min-h-[850px] grid-cols-[1fr_300px] bg-white">
+
 
           {/* ================= LEFT EDITOR ================= */}
 
@@ -283,45 +270,62 @@ export default function ArticleEditor() {
             <input
               type="text"
               value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
+              onChange={(e) =>
+                handleTitleChange(e.target.value)
+              }
               placeholder="मुख्य शीर्षक प्रविष्ट गर्नुहोस् (Headline)"
               className="mb-8 w-full border border-[#e2beba] px-4 py-5 text-4xl font-bold outline-none placeholder:text-[#d7d7d7] focus:border-[#8f000d]"
             />
 
-            {/* CONTENT */}
+
+            {/* CONTENT LABEL */}
 
             <div className="mb-4 border-b border-[#e2beba] pb-4">
+
               <span className="text-sm font-medium text-[#5a403e]">
                 Article Content
               </span>
+
             </div>
+
+
+            {/* CONTENT */}
 
             <textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) =>
+                setContent(e.target.value)
+              }
               placeholder="समाचारको सामग्री यहाँ लेख्नुहोस्..."
               className="min-h-[500px] w-full resize-none border-none text-[17px] leading-8 outline-none placeholder:text-[#999]"
             />
 
+
             {/* PULL QUOTE */}
 
             <div className="mt-8">
+
               <label className="mb-2 block text-sm font-semibold text-[#5a403e]">
                 Pull Quote
               </label>
 
               <textarea
                 value={pullQuote}
-                onChange={(e) => setPullQuote(e.target.value)}
+                onChange={(e) =>
+                  setPullQuote(e.target.value)
+                }
                 placeholder="महत्वपूर्ण उद्धरण..."
                 rows={3}
                 className="w-full resize-none border border-[#e2beba] p-4 outline-none focus:border-[#8f000d]"
               />
+
             </div>
+
 
             {/* HERO IMAGE SOURCE */}
 
             <div className="mt-6">
+
               <label className="mb-2 block text-sm font-semibold text-[#5a403e]">
                 Hero Image Source
               </label>
@@ -329,28 +333,35 @@ export default function ArticleEditor() {
               <input
                 type="text"
                 value={heroImageSrc}
-                onChange={(e) => setHeroImageSrc(e.target.value)}
+                onChange={(e) =>
+                  setHeroImageSrc(e.target.value)
+                }
                 placeholder="Image source / photographer..."
                 className="w-full border border-[#e2beba] p-3 outline-none focus:border-[#8f000d]"
               />
+
             </div>
+
 
             {/* MESSAGE */}
 
             {message && (
-              <div className="mt-6 break-words rounded border border-[#e2beba] bg-[#f9f9f9] p-4 text-sm text-[#5a403e]">
+              <div className="mt-6 rounded border border-[#e2beba] bg-[#f9f9f9] p-4 text-sm text-[#5a403e]">
                 {message}
               </div>
             )}
+
           </main>
+
 
           {/* ================= RIGHT SIDEBAR ================= */}
 
           <aside className="bg-[#f9f9f9]">
 
-            {/* METADATA */}
+            {/* METADATA HEADER */}
 
             <div className="border-b border-[#e2beba] px-5 py-5">
+
               <h2 className="text-xl font-bold text-[#8f000d]">
                 Metadata
               </h2>
@@ -358,23 +369,30 @@ export default function ArticleEditor() {
               <p className="mt-1 text-sm text-[#5a403e]">
                 Article Details
               </p>
+
             </div>
+
 
             <div className="space-y-6 px-5 py-6">
 
-              {/* CATEGORY */}
+
+              {/* ================= CATEGORY ================= */}
 
               <div>
+
                 <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[#5a403e]">
                   Category
                 </label>
 
                 <select
                   value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
+                  onChange={(e) =>
+                    setCategoryId(e.target.value)
+                  }
                   disabled={loadingCategories}
                   className="w-full rounded border border-[#e2beba] bg-white p-3 outline-none focus:border-[#8f000d] disabled:bg-[#eeeeee]"
                 >
+
                   <option value="">
                     {loadingCategories
                       ? "Loading categories..."
@@ -389,12 +407,16 @@ export default function ArticleEditor() {
                       {category.name}
                     </option>
                   ))}
+
                 </select>
+
               </div>
 
-              {/* TAGS */}
+
+              {/* ================= TAGS ================= */}
 
               <div>
+
                 <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[#5a403e]">
                   Tags
                 </label>
@@ -402,17 +424,23 @@ export default function ArticleEditor() {
                 <input
                   type="text"
                   value={tags}
-                  onChange={(e) => setTags(e.target.value)}
+                  onChange={(e) =>
+                    setTags(e.target.value)
+                  }
                   placeholder="Add tags..."
                   className="w-full border border-[#e2beba] bg-white p-3 outline-none focus:border-[#8f000d]"
                 />
+
               </div>
+
 
               <div className="border-t border-[#e2beba]" />
 
-              {/* FEATURED IMAGE */}
+
+              {/* ================= FEATURED IMAGE ================= */}
 
               <div>
+
                 <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[#5a403e]">
                   Featured Image
                 </label>
@@ -431,8 +459,13 @@ export default function ArticleEditor() {
                     </>
                   ) : (
                     <>
-                      <span className="mb-1 text-2xl">↑</span>
-                      <span>Click to upload</span>
+                      <span className="mb-1 text-2xl">
+                        ↑
+                      </span>
+
+                      <span>
+                        Click to upload
+                      </span>
                     </>
                   )}
 
@@ -442,12 +475,16 @@ export default function ArticleEditor() {
                     onChange={handleImageChange}
                     className="hidden"
                   />
+
                 </label>
+
               </div>
 
-              {/* SLUG */}
+
+              {/* ================= SLUG ================= */}
 
               <div>
+
                 <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[#5a403e]">
                   URL Slug
                 </label>
@@ -455,32 +492,44 @@ export default function ArticleEditor() {
                 <input
                   type="text"
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  onChange={(e) =>
+                    setSlug(e.target.value)
+                  }
                   placeholder="article-slug"
                   className="w-full border border-[#e2beba] bg-white p-3 outline-none focus:border-[#8f000d]"
                 />
+
               </div>
 
-              {/* META DESCRIPTION */}
+
+              {/* ================= META DESCRIPTION ================= */}
 
               <div>
+
                 <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-[#5a403e]">
                   Meta Description
                 </label>
 
                 <textarea
                   value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
+                  onChange={(e) =>
+                    setMetaDescription(e.target.value)
+                  }
                   placeholder="Brief description for search engines..."
                   rows={4}
                   className="w-full resize-none border border-[#e2beba] bg-white p-3 outline-none focus:border-[#8f000d]"
                 />
+
               </div>
 
             </div>
+
           </aside>
+
         </div>
+
       </div>
+
     </div>
   );
 }

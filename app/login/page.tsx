@@ -21,44 +21,54 @@ const router=useRouter();
     window.location.href = `${API_BASE}/Authencation/google`;
   };
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    try {
-      const response = await axios.post(
-        `${API_BASE}/Authencation/login`,
-        {
-          email: email,
-          password: password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      console.log("Login successful:", response.data);
-router.push("/admin/article");
-   
-
-    } catch (error: any) {
-      console.error("Login error:", error);
-
-      if (error.response) {
-        setError(
-          error.response.data?.message ||
-            error.response.data ||
-            "इमेल वा पासवर्ड गलत छ।"
-        );
-      } else {
-        setError("सर्भरसँग जडान हुन सकेन।");
+  try {
+    const response = await axios.post(
+      `${API_BASE}/Authencation/login`,
+      {
+        email: email,
+        password: password,
+      },
+      {
+        withCredentials: true,
       }
-    } finally {
-      setLoading(false);
+    );
+
+    console.log("Login successful:", response.data);
+
+    // CHECK COOKIE
+    const cookieCheck = await axios.get(
+      `${API_BASE}/Authencation/check-cookie`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    console.log("COOKIE CHECK:", cookieCheck.data);
+
+    router.push("/admin/article");
+
+  } catch (error: any) {
+    console.error("Login error:", error);
+
+    if (error.response) {
+      setError(
+        error.response.data?.message ||
+        error.response.data ||
+        "इमेल वा पासवर्ड गलत छ।"
+      );
+    } else {
+      setError("सर्भरसँग जडान हुन सकेन।");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen w-full bg-[var(--background)] flex items-center justify-center px-4 py-10">
