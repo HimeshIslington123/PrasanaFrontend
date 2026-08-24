@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search, UserCircle, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 const categories = [
-  { name: "गृहपृष्ठ", href: "/home" },
+  { name: "गृहपृष्ठ", href: "/" },
   { name: "राजनीति", href: "/category/8" },
   { name: "समाज", href: "/category/7" },
   { name: "अर्थतन्त्र", href: "/category/6" },
@@ -16,6 +17,7 @@ const categories = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="w-full bg-[var(--surface-container-lowest)]">
@@ -85,26 +87,29 @@ export default function Header() {
 
       {/* Desktop Navigation */}
       <nav className="hidden h-[74px] items-center justify-center border-b border-[var(--surface-container-high)] md:flex">
-
         <div className="flex items-center gap-11">
 
-          {categories.map((category, index) => (
-            <Link
-              key={category.href}
-              href={category.href}
-              className={`relative flex h-[74px] items-center px-1 text-[16px] font-bold transition ${
-                index === 2
-                  ? "text-[var(--primary)]"
-                  : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
-              }`}
-            >
-              {category.name}
+          {categories.map((category) => {
+            const isActive = pathname === category.href;
 
-              {index === 2 && (
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[var(--primary)]" />
-              )}
-            </Link>
-          ))}
+            return (
+              <Link
+                key={category.href}
+                href={category.href}
+                className={`relative flex h-[74px] items-center px-1 text-[16px] font-bold transition ${
+                  isActive
+                    ? "text-[var(--primary)]"
+                    : "text-[var(--on-surface-variant)] hover:text-[var(--primary)]"
+                }`}
+              >
+                {category.name}
+
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[var(--primary)]" />
+                )}
+              </Link>
+            );
+          })}
 
         </div>
       </nav>
@@ -115,20 +120,24 @@ export default function Header() {
 
           <div className="flex flex-col px-6 py-3">
 
-            {categories.map((category, index) => (
-              <Link
-                key={category.href}
-                href={category.href}
-                onClick={() => setMenuOpen(false)}
-                className={`border-b border-[var(--surface-container)] py-4 text-base font-bold ${
-                  index === 2
-                    ? "text-[var(--primary)]"
-                    : "text-[var(--on-surface-variant)]"
-                }`}
-              >
-                {category.name}
-              </Link>
-            ))}
+            {categories.map((category) => {
+              const isActive = pathname === category.href;
+
+              return (
+                <Link
+                  key={category.href}
+                  href={category.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`border-b border-[var(--surface-container)] py-4 text-base font-bold ${
+                    isActive
+                      ? "text-[var(--primary)]"
+                      : "text-[var(--on-surface-variant)]"
+                  }`}
+                >
+                  {category.name}
+                </Link>
+              );
+            })}
 
             <Link
               href="/login"
@@ -139,7 +148,6 @@ export default function Header() {
             </Link>
 
           </div>
-
         </nav>
       )}
 

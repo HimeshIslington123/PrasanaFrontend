@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-
 
 const notoSans = Noto_Sans({
   subsets: ["devanagari", "latin"],
@@ -14,8 +11,6 @@ export const metadata: Metadata = {
   title: {
     default: "प्रश्न",
     template: "%s | प्रश्न",
-
-   
   },
 
   description:
@@ -46,7 +41,6 @@ export const metadata: Metadata = {
   ],
 
   creator: "प्रश्न",
-
   publisher: "प्रश्न",
 
   openGraph: {
@@ -55,7 +49,7 @@ export const metadata: Metadata = {
     siteName: "प्रश्न",
     title: "प्रश्न | नेपालको पछिल्लो समाचार",
     description:
-      "नेपाल तथा विश्वभरका पछिल्ला समाचार, राजनीति, समाज,df अर्थतन्त्र, खेलकुद र मनोरञ्जनका जानकारी।",
+      "नेपाल तथा विश्वभरका पछिल्ला समाचार, राजनीति, समाज, अर्थतन्त्र, खेलकुद र मनोरञ्जनका जानकारी।",
   },
 
   twitter: {
@@ -79,11 +73,7 @@ export default function RootLayout({
   return (
     <html lang="ne">
       <body className={notoSans.variable}>
-        <Header />
-
         {children}
-
-        <Footer />
       </body>
     </html>
   );
