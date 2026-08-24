@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 
   description:
     "प्रसन्ना न्यूज नेपालको डिजिटल समाचार पोर्टल हो। नेपाल तथा विश्वभरका ताजा र महत्वपूर्ण समाचार, राजनीति, समाज, अर्थतन्त्र, व्यापार, प्रविधि, खेलकुद, मनोरञ्जन, शिक्षा र समसामयिक खबरहरू पढ्नुहोस्।",
-
+verification: {
+  google: "JY08RkncfVwO8VI9uFp00GROZnFRmrmu2lmnNXao9eA",
+},
   keywords: [
     // =========================
     // Brand - Nepali
