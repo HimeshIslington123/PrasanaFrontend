@@ -29,3 +29,16 @@
   --on-error: #ffffff;
 }
 
+@keyframes news-ticker {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-news-ticker {
+  animation: news-ticker 25s linear infinite;
+}
