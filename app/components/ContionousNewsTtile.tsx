@@ -27,7 +27,7 @@ const ContionousNewsTtile = async () => {
 
   return (
     <div
-      className="w-full overflow-hidden"
+      className="w-full mt-2 overflow-hidden"
       style={{
         backgroundColor: "var(--primary)",
         color: "var(--on-primary)",
