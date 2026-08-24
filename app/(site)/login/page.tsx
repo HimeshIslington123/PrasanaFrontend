@@ -41,17 +41,9 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 
     console.log("Login successful:", response.data);
 
-    // CHECK COOKIE
-    const cookieCheck = await axios.get(
-      `${API_BASE}/Authencation/check-cookie`,
-      {
-        withCredentials: true,
-      }
-    );
-alert(JSON.stringify(cookieCheck.data));
-    console.log("COOKIE CHECK:", cookieCheck.data);
+ 
 
-    //router.push("/admin/article");
+    router.push("/admin/newsDashboard");
 
   } catch (error: any) {
     console.error("Login error:", error);
