@@ -239,12 +239,14 @@ verification: {
 
   creator: "प्रसन्ना न्यूज",
   publisher: "प्रसन्ना न्यूज",
+// Your real website URL
+  metadataBase: new URL("https://prasananews.vercel.app"),
 
-  metadataBase: new URL("https://your-domain.com"),
-
+  // Canonical URL
   alternates: {
     canonical: "/",
   },
+
 
   openGraph: {
     type: "website",
