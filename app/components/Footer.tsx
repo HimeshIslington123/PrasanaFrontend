@@ -1,21 +1,36 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const footerLinks = [
-  "हाम्रो बारेमा",
-  "सम्पर्क",
-  "विज्ञापन",
-  "गोपनीयता नीति",
-  "कुकीज",
+  {
+    label: "हाम्रो बारेमा",
+    href: "/aboutus",
+  },
+  {
+    label: "सम्पर्क",
+    href: "/contact",
+  },
+  {
+    label: "विज्ञापन",
+    href: "/Advertise",
+  },
+  {
+    label: "गोपनीयता नीति",
+    href: "/privacy",
+  },
+  {
+    label: "कुकीज",
+    href: "/cookie",
+  },
 ];
 
 export default function Footer() {
   return (
-    <footer className=" ">
+    <footer>
       <div
         className="
           mx-auto
           w-full
-     
           overflow-hidden
           rounded-b-[24px]
           border-t-[5px]
@@ -40,14 +55,16 @@ export default function Footer() {
         >
           {/* LEFT */}
           <div className="flex flex-col items-start">
-            <Image
-              src="/logo.png"
-              alt="प्रश्न"
-              width={105}
-              height={60}
-              priority
-              className="h-auto w-[70px] sm:w-[85px]"
-            />
+            <Link href="/" aria-label="प्रश्न गृहपृष्ठ">
+              <Image
+                src="/logo.png"
+                alt="प्रश्न"
+                width={105}
+                height={60}
+                priority
+                className="h-auto w-[70px] sm:w-[85px]"
+              />
+            </Link>
 
             <p
               className="
@@ -64,6 +81,7 @@ export default function Footer() {
 
           {/* RIGHT LINKS */}
           <nav
+            aria-label="Footer navigation"
             className="
               flex
               flex-wrap
@@ -80,17 +98,17 @@ export default function Footer() {
             "
           >
             {footerLinks.map((link) => (
-              <a
-                key={link}
-                href="#"
+              <Link
+                key={link.href}
+                href={link.href}
                 className="
                   whitespace-nowrap
                   transition-colors
                   hover:text-[var(--primary)]
                 "
               >
-                {link}
-              </a>
+                {link.label}
+              </Link>
             ))}
           </nav>
         </div>

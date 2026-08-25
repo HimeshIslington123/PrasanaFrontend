@@ -21,27 +21,47 @@ type News = {
     | null;
 };
 
+type PagedNewsResponse = {
+  data: News[];
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 export default function NewsPage() {
   const router = useRouter();
 
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     const getNews = async () => {
       try {
-   const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/news`);
+        setLoading(true);
 
-        setNews(response.data);
+        const response = await axios.get<PagedNewsResponse>(
+          `${process.env.NEXT_PUBLIC_API_URL}/news?page=${currentPage}&pageSize=10`
+        );
+
+        // News list
+        setNews(response.data.data);
+
+        // Total number of pages from backend
+        setTotalPages(response.data.totalPages);
       } catch (error) {
         console.error("Failed to fetch news:", error);
+        setNews([]);
       } finally {
         setLoading(false);
       }
     };
 
     getNews();
-  }, []);
+  }, [currentPage]);
 
   const openNews = (id: number) => {
     router.push(`/News/${id}`);
@@ -55,6 +75,20 @@ export default function NewsPage() {
       month: "short",
       day: "numeric",
     });
+  };
+
+  // Previous Page
+  const previousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  // Next Page
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
   };
 
   if (loading) {
@@ -83,10 +117,8 @@ export default function NewsPage() {
   return (
     <main className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* =====================================================
-            CATEGORY TITLE
-        ====================================================== */}
 
+        {/* CATEGORY TITLE */}
         <div className="mb-7">
           <h1
             className="
@@ -105,10 +137,6 @@ export default function NewsPage() {
           </h1>
         </div>
 
-        {/* =====================================================
-            DESKTOP GRID
-        ====================================================== */}
-
         <div
           className="
             grid
@@ -117,13 +145,10 @@ export default function NewsPage() {
             lg:grid-cols-[minmax(0,2fr)_270px]
           "
         >
-          {/* =================================================
-              LEFT CONTENT
-          ================================================= */}
-
+          {/* LEFT CONTENT */}
           <div>
-            {/* FEATURED NEWS */}
 
+            {/* FEATURED NEWS */}
             <article
               onClick={() => openNews(featuredNews.id)}
               className="
@@ -136,8 +161,6 @@ export default function NewsPage() {
                 hover:shadow-md
               "
             >
-              {/* Image */}
-
               <div
                 className="
                   relative
@@ -152,10 +175,7 @@ export default function NewsPage() {
                   alt={featuredNews.title}
                   fill
                   priority
-                  sizes="
-                    (max-width: 1024px) 100vw,
-                    850px
-                  "
+                  sizes="(max-width: 1024px) 100vw, 850px"
                   className="
                     object-cover
                     transition
@@ -164,8 +184,6 @@ export default function NewsPage() {
                   "
                 />
               </div>
-
-              {/* Content */}
 
               <div className="p-5 sm:p-6">
                 <span
@@ -212,27 +230,14 @@ export default function NewsPage() {
                   {featuredNews.content}
                 </p>
 
-                <div
-                  className="
-                    mt-4
-                    flex
-                    items-center
-                    gap-2
-                    text-xs
-                    text-gray-500
-                  "
-                >
+                <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
                   <Clock size={13} />
-
                   <span>{formatTime(featuredNews.created)}</span>
                 </div>
               </div>
             </article>
 
-            {/* =================================================
-                NEWS GRID
-            ================================================== */}
-
+            {/* NEWS GRID */}
             <div
               className="
                 mt-6
@@ -257,8 +262,6 @@ export default function NewsPage() {
                     hover:shadow-md
                   "
                 >
-                  {/* Image */}
-
                   <div
                     className="
                       relative
@@ -286,8 +289,6 @@ export default function NewsPage() {
                     />
                   </div>
 
-                  {/* Content */}
-
                   <div className="p-4">
                     <h3
                       className="
@@ -302,18 +303,8 @@ export default function NewsPage() {
                       {item.title}
                     </h3>
 
-                    <div
-                      className="
-                        mt-3
-                        flex
-                        items-center
-                        gap-2
-                        text-xs
-                        text-gray-500
-                      "
-                    >
+                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
                       <Clock size={13} />
-
                       <span>{formatTime(item.created)}</span>
                     </div>
                   </div>
@@ -321,23 +312,23 @@ export default function NewsPage() {
               ))}
             </div>
 
-            {/* =================================================
-                PAGINATION
-            ================================================== */}
-
+            {/* ================= PAGINATION ================= */}
             <div
               className="
                 mt-12
                 flex
                 items-center
                 justify-center
-                gap-1
+                gap-2
                 border-t
                 border-[#ead9d9]
                 pt-5
               "
             >
+              {/* PREVIOUS BUTTON */}
               <button
+                onClick={previousPage}
+                disabled={currentPage === 1}
                 className="
                   flex
                   h-9
@@ -349,56 +340,41 @@ export default function NewsPage() {
                   bg-white
                   text-gray-600
                   hover:bg-gray-100
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
                 "
               >
                 <ChevronLeft size={16} />
               </button>
 
-              <button
+              {/* CURRENT PAGE */}
+              <div
                 className="
+                  flex
                   h-9
-                  w-9
+                  min-w-9
+                  items-center
+                  justify-center
                   border
                   border-[#6d001b]
                   bg-[#6d001b]
+                  px-3
                   text-sm
                   text-white
                 "
               >
-                1
-              </button>
+                {currentPage}
+              </div>
 
+              {/* TOTAL PAGES */}
+              <span className="text-sm text-gray-600">
+                of {totalPages}
+              </span>
+
+              {/* NEXT BUTTON */}
               <button
-                className="
-                  h-9
-                  w-9
-                  border
-                  border-[#ead9d9]
-                  bg-white
-                  text-sm
-                  hover:bg-gray-100
-                "
-              >
-                2
-              </button>
-
-              <button
-                className="
-                  h-9
-                  w-9
-                  border
-                  border-[#ead9d9]
-                  bg-white
-                  text-sm
-                  hover:bg-gray-100
-                "
-              >
-                3
-              </button>
-
-              <span className="px-2 text-sm">...</span>
-
-              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
                 className="
                   flex
                   h-9
@@ -410,6 +386,8 @@ export default function NewsPage() {
                   bg-white
                   text-gray-600
                   hover:bg-gray-100
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
                 "
               >
                 <ChevronRight size={16} />
@@ -417,13 +395,10 @@ export default function NewsPage() {
             </div>
           </div>
 
-          {/* =================================================
-              RIGHT SIDEBAR
-          ================================================== */}
-
+          {/* RIGHT SIDEBAR */}
           <aside className="space-y-6">
-            {/* POPULAR NEWS */}
 
+            {/* POPULAR NEWS */}
             <section
               className="
                 border
@@ -480,7 +455,6 @@ export default function NewsPage() {
             </section>
 
             {/* NEWSLETTER */}
-
             <section
               className="
                 border
