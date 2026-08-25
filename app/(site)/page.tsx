@@ -4,21 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
-import {
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  Mail,
-} from "lucide-react";
-
-// ==========================================
-// TYPES
-// ==========================================
-
-type Comment = {
-  newsId: number;
-  content: string;
-};
+import { Clock, ChevronLeft, ChevronRight, Mail } from "lucide-react";
 
 type News = {
   id: number;
@@ -26,183 +12,82 @@ type News = {
   content: string;
   categoryname: string;
   created: string;
-  image: string | null;
-  comments?: Comment[] | null;
+  image: string;
+  comments:
+    | {
+        newsId: number;
+        content: string;
+      }[]
+    | null;
+  pullQuote?: string | null;
+  heroImageSrc?: string | null;
 };
 
-type PagedNewsResponse = {
-  data?: News[];
-  items?: News[];
-  currentPage?: number;
-  pageSize?: number;
-  totalItems?: number;
-  totalPages?: number;
-
-  // Support .NET responses with different casing
-  Data?: News[];
-  Items?: News[];
-  CurrentPage?: number;
-  PageSize?: number;
-  TotalItems?: number;
-  TotalPages?: number;
+type NewsResponse = {
+  data: News[];
+  currentPage: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 };
-
-// ==========================================
-// COMPONENT
-// ==========================================
 
 export default function NewsPage() {
   const router = useRouter();
 
-  // ==========================================
-  // STATE
-  // ==========================================
-
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // ==========================================
-  // API URL
-  // ==========================================
+  const pageSize = 10;
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-  // ==========================================
-  // FETCH NEWS
-  // ==========================================
+  // =========================================================
+  // GET NEWS
+  // =========================================================
 
   useEffect(() => {
     const getNews = async () => {
       try {
         setLoading(true);
-        setError("");
 
-        if (!API_URL) {
-          throw new Error(
-            "NEXT_PUBLIC_API_URL is not configured."
-          );
-        }
-
-        const response = await axios.get<PagedNewsResponse>(
-          `${API_URL}/news`,
+        const response = await axios.get<NewsResponse>(
+          `${process.env.NEXT_PUBLIC_API_URL}/news`,
           {
             params: {
               page: currentPage,
-              pageSize: 10,
+              pageSize: pageSize,
             },
           }
         );
 
-        console.log("================================");
-        console.log("NEWS API RESPONSE:");
-        console.log(response.data);
-        console.log("================================");
-
-        const result = response.data;
-
-        // ==========================================
-        // GET NEWS ARRAY SAFELY
-        // ==========================================
-
-        const newsData: News[] =
-          Array.isArray(result.data)
-            ? result.data
-            : Array.isArray(result.items)
-            ? result.items
-            : Array.isArray(result.Data)
-            ? result.Data
-            : Array.isArray(result.Items)
-            ? result.Items
-            : [];
-
-        // ==========================================
-        // GET TOTAL PAGES SAFELY
-        // ==========================================
-
-        const pages = Number(
-          result.totalPages ??
-            result.TotalPages ??
-            1
-        );
-
-        // ==========================================
-        // SET STATE
-        // ==========================================
-
-        setNews(newsData);
-
-        setTotalPages(
-          Number.isFinite(pages) && pages > 0
-            ? pages
-            : 1
-        );
-
-        console.log("NEWS ARRAY:", newsData);
-        console.log("TOTAL PAGES:", pages);
+        setNews(response.data.data);
+        setTotalPages(response.data.totalPages);
       } catch (error) {
-        console.error(
-          "Failed to fetch news:",
-          error
-        );
-
+        console.error("Failed to fetch news:", error);
         setNews([]);
-        setTotalPages(1);
-
-        if (axios.isAxiosError(error)) {
-          if (error.response) {
-            setError(
-              `समाचार लोड गर्न सकिएन। Server error: ${error.response.status}`
-            );
-          } else if (error.request) {
-            setError(
-              "Server सँग सम्पर्क हुन सकेन।"
-            );
-          } else {
-            setError(
-              "समाचार लोड गर्दा समस्या भयो।"
-            );
-          }
-        } else if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError(
-            "समाचार लोड गर्दा समस्या भयो।"
-          );
-        }
       } finally {
         setLoading(false);
       }
     };
 
     getNews();
-  }, [currentPage, API_URL]);
+  }, [currentPage]);
 
-  // ==========================================
+  // =========================================================
   // OPEN NEWS
-  // ==========================================
+  // =========================================================
 
   const openNews = (id: number) => {
     router.push(`/News/${id}`);
   };
 
-  // ==========================================
+  // =========================================================
   // FORMAT DATE
-  // ==========================================
+  // =========================================================
 
   const formatTime = (date: string) => {
-    if (!date) {
-      return "मिति उपलब्ध छैन";
-    }
-
     const newsDate = new Date(date);
-
-    if (Number.isNaN(newsDate.getTime())) {
-      return "मिति उपलब्ध छैन";
-    }
 
     return newsDate.toLocaleDateString("ne-NP", {
       year: "numeric",
@@ -211,223 +96,111 @@ export default function NewsPage() {
     });
   };
 
-  // ==========================================
-  // PREVIOUS PAGE
-  // ==========================================
+  // =========================================================
+  // CHANGE PAGE
+  // =========================================================
 
-  const previousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
+  const changePage = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return;
     }
+
+    setCurrentPage(page);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
-  // ==========================================
-  // NEXT PAGE
-  // ==========================================
+  // =========================================================
+  // PAGE NUMBERS
+  // =========================================================
 
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
 
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+
+      return pages;
     }
+
+    pages.push(1);
+
+    if (currentPage > 3) {
+      pages.push("...");
+    }
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (currentPage < totalPages - 2) {
+      pages.push("...");
+    }
+
+    pages.push(totalPages);
+
+    return pages;
   };
 
-  // ==========================================
+  // =========================================================
   // LOADING
-  // ==========================================
+  // =========================================================
 
   if (loading) {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
         <div className="mx-auto max-w-[1280px]">
-          <div className="flex min-h-[300px] items-center justify-center">
-            <p
-              className="
-                font-[family-name:var(--font-devanagari)]
-                text-lg
-                text-gray-600
-              "
-            >
-              समाचार लोड हुँदैछ...
-            </p>
-          </div>
+          <p
+            className="
+              text-center
+              font-[family-name:var(--font-devanagari)]
+            "
+          >
+            समाचार लोड हुँदैछ...
+          </p>
         </div>
       </main>
     );
   }
 
-  // ==========================================
-  // ERROR
-  // ==========================================
+  // =========================================================
+  // EMPTY
+  // =========================================================
 
-  if (error) {
+  if (news.length === 0) {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
         <div className="mx-auto max-w-[1280px]">
-          <div className="flex min-h-[300px] flex-col items-center justify-center">
-            <p
-              className="
-                font-[family-name:var(--font-devanagari)]
-                text-lg
-                font-semibold
-                text-red-700
-              "
-            >
-              {error}
-            </p>
-
-            <button
-              onClick={() => window.location.reload()}
-              className="
-                mt-5
-                bg-[#6d001b]
-                px-5
-                py-2.5
-                font-[family-name:var(--font-devanagari)]
-                text-sm
-                font-bold
-                text-white
-                transition
-                hover:opacity-90
-              "
-            >
-              पुनः प्रयास गर्नुहोस्
-            </button>
-          </div>
+          <p
+            className="
+              text-center
+              font-[family-name:var(--font-devanagari)]
+            "
+          >
+            कुनै समाचार भेटिएन।
+          </p>
         </div>
       </main>
     );
   }
-
-  // ==========================================
-  // NO NEWS
-  // ==========================================
-
-  if (!Array.isArray(news) || news.length === 0) {
-    return (
-      <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
-        <div className="mx-auto max-w-[1280px]">
-          <div className="flex min-h-[300px] items-center justify-center">
-            <p
-              className="
-                font-[family-name:var(--font-devanagari)]
-                text-lg
-                text-gray-600
-              "
-            >
-              कुनै समाचार भेटिएन।
-            </p>
-          </div>
-
-          {/* PAGINATION */}
-          <div className="mt-8 flex items-center justify-center gap-2">
-            <button
-              onClick={previousPage}
-              disabled={currentPage === 1}
-              className="
-                flex
-                h-9
-                w-9
-                items-center
-                justify-center
-                border
-                border-[#ead9d9]
-                bg-white
-                text-gray-600
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            <div
-              className="
-                flex
-                h-9
-                min-w-9
-                items-center
-                justify-center
-                border
-                border-[#6d001b]
-                bg-[#6d001b]
-                px-3
-                text-sm
-                text-white
-              "
-            >
-              {currentPage}
-            </div>
-
-            <span className="text-sm text-gray-600">
-              of {totalPages}
-            </span>
-
-            <button
-              onClick={nextPage}
-              disabled={currentPage >= totalPages}
-              className="
-                flex
-                h-9
-                w-9
-                items-center
-                justify-center
-                border
-                border-[#ead9d9]
-                bg-white
-                text-gray-600
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // ==========================================
-  // FEATURED NEWS
-  // ==========================================
 
   const featuredNews = news[0];
-
-  // ==========================================
-  // GRID NEWS
-  // ==========================================
-
   const gridNews = news.slice(1);
-
-  // ==========================================
-  // RETURN
-  // ==========================================
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-      <div
-        className="
-          mx-auto
-          max-w-[1280px]
-          px-4
-          py-8
-          sm:px-6
-          lg:px-8
-        "
-      >
-        {/* ==========================================
+      <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+        {/* =====================================================
             CATEGORY TITLE
-        ========================================== */}
+        ====================================================== */}
 
         <div className="mb-7">
           <h1
@@ -443,13 +216,13 @@ export default function NewsPage() {
               sm:text-4xl
             "
           >
-            {featuredNews.categoryname || "राजनीति"}
+            {featuredNews.categoryname || "समाचार"}
           </h1>
         </div>
 
-        {/* ==========================================
-            MAIN LAYOUT
-        ========================================== */}
+        {/* =====================================================
+            DESKTOP GRID
+        ====================================================== */}
 
         <div
           className="
@@ -459,19 +232,17 @@ export default function NewsPage() {
             lg:grid-cols-[minmax(0,2fr)_270px]
           "
         >
-          {/* ========================================
+          {/* =================================================
               LEFT CONTENT
-          ======================================== */}
+          ================================================= */}
 
           <div>
-            {/* ======================================
+            {/* =================================================
                 FEATURED NEWS
-            ====================================== */}
+            ================================================== */}
 
             <article
-              onClick={() =>
-                openNews(featuredNews.id)
-              }
+              onClick={() => openNews(featuredNews.id)}
               className="
                 cursor-pointer
                 overflow-hidden
@@ -482,7 +253,7 @@ export default function NewsPage() {
                 hover:shadow-md
               "
             >
-              {/* IMAGE */}
+              {/* Image */}
 
               <div
                 className="
@@ -494,14 +265,8 @@ export default function NewsPage() {
                 "
               >
                 <Image
-                  src={
-                    featuredNews.image ||
-                    "/images/default-news.jpg"
-                  }
-                  alt={
-                    featuredNews.title ||
-                    "समाचार"
-                  }
+                  src={featuredNews.image}
+                  alt={featuredNews.title}
                   fill
                   priority
                   sizes="
@@ -517,11 +282,9 @@ export default function NewsPage() {
                 />
               </div>
 
-              {/* CONTENT */}
+              {/* Content */}
 
               <div className="p-5 sm:p-6">
-                {/* LABEL */}
-
                 <span
                   className="
                     inline-block
@@ -538,8 +301,6 @@ export default function NewsPage() {
                   प्रमुख खबर
                 </span>
 
-                {/* TITLE */}
-
                 <h2
                   className="
                     mt-3
@@ -551,11 +312,8 @@ export default function NewsPage() {
                     sm:text-3xl
                   "
                 >
-                  {featuredNews.title ||
-                    "शीर्षक उपलब्ध छैन"}
+                  {featuredNews.title}
                 </h2>
-
-                {/* DESCRIPTION */}
 
                 <p
                   className="
@@ -568,11 +326,8 @@ export default function NewsPage() {
                     sm:text-base
                   "
                 >
-                  {featuredNews.content ||
-                    "समाचार विवरण उपलब्ध छैन।"}
+                  {featuredNews.content}
                 </p>
-
-                {/* DATE */}
 
                 <div
                   className="
@@ -586,18 +341,14 @@ export default function NewsPage() {
                 >
                   <Clock size={13} />
 
-                  <span>
-                    {formatTime(
-                      featuredNews.created
-                    )}
-                  </span>
+                  <span>{formatTime(featuredNews.created)}</span>
                 </div>
               </div>
             </article>
 
-            {/* ======================================
+            {/* =================================================
                 NEWS GRID
-            ====================================== */}
+            ================================================== */}
 
             {gridNews.length > 0 && (
               <div
@@ -612,9 +363,7 @@ export default function NewsPage() {
                 {gridNews.map((item) => (
                   <article
                     key={item.id}
-                    onClick={() =>
-                      openNews(item.id)
-                    }
+                    onClick={() => openNews(item.id)}
                     className="
                       cursor-pointer
                       overflow-hidden
@@ -626,7 +375,7 @@ export default function NewsPage() {
                       hover:shadow-md
                     "
                   >
-                    {/* IMAGE */}
+                    {/* Image */}
 
                     <div
                       className="
@@ -638,14 +387,8 @@ export default function NewsPage() {
                       "
                     >
                       <Image
-                        src={
-                          item.image ||
-                          "/images/default-news.jpg"
-                        }
-                        alt={
-                          item.title ||
-                          "समाचार"
-                        }
+                        src={item.image}
+                        alt={item.title}
                         fill
                         sizes="
                           (max-width: 640px) 100vw,
@@ -661,7 +404,7 @@ export default function NewsPage() {
                       />
                     </div>
 
-                    {/* CONTENT */}
+                    {/* Content */}
 
                     <div className="p-4">
                       <h3
@@ -674,8 +417,7 @@ export default function NewsPage() {
                           text-[#171313]
                         "
                       >
-                        {item.title ||
-                          "शीर्षक उपलब्ध छैन"}
+                        {item.title}
                       </h3>
 
                       <div
@@ -690,11 +432,7 @@ export default function NewsPage() {
                       >
                         <Clock size={13} />
 
-                        <span>
-                          {formatTime(
-                            item.created
-                          )}
-                        </span>
+                        <span>{formatTime(item.created)}</span>
                       </div>
                     </div>
                   </article>
@@ -702,110 +440,124 @@ export default function NewsPage() {
               </div>
             )}
 
-            {/* ======================================
+            {/* =================================================
                 PAGINATION
-            ====================================== */}
+            ================================================== */}
 
-            <div
-              className="
-                mt-12
-                flex
-                items-center
-                justify-center
-                gap-2
-                border-t
-                border-[#ead9d9]
-                pt-5
-              "
-            >
-              {/* PREVIOUS */}
-
-              <button
-                onClick={previousPage}
-                disabled={currentPage === 1}
-                aria-label="Previous page"
-                className="
-                  flex
-                  h-9
-                  w-9
-                  items-center
-                  justify-center
-                  border
-                  border-[#ead9d9]
-                  bg-white
-                  text-gray-600
-                  transition
-                  hover:bg-gray-100
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              {/* CURRENT PAGE */}
-
+            {totalPages > 1 && (
               <div
                 className="
+                  mt-12
                   flex
-                  h-9
-                  min-w-9
+                  flex-wrap
                   items-center
                   justify-center
-                  border
-                  border-[#6d001b]
-                  bg-[#6d001b]
-                  px-3
-                  text-sm
-                  text-white
-                "
-              >
-                {currentPage}
-              </div>
-
-              {/* TOTAL */}
-
-              <span className="text-sm text-gray-600">
-                of {totalPages}
-              </span>
-
-              {/* NEXT */}
-
-              <button
-                onClick={nextPage}
-                disabled={
-                  currentPage >= totalPages
-                }
-                aria-label="Next page"
-                className="
-                  flex
-                  h-9
-                  w-9
-                  items-center
-                  justify-center
-                  border
+                  gap-1
+                  border-t
                   border-[#ead9d9]
-                  bg-white
-                  text-gray-600
-                  transition
-                  hover:bg-gray-100
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
+                  pt-5
                 "
               >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+                {/* Previous */}
+
+                <button
+                  onClick={() => changePage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`
+                    flex
+                    h-9
+                    w-9
+                    items-center
+                    justify-center
+                    border
+                    border-[#ead9d9]
+                    bg-white
+                    text-gray-600
+                    transition
+                    ${
+                      currentPage === 1
+                        ? "cursor-not-allowed opacity-40"
+                        : "hover:bg-gray-100"
+                    }
+                  `}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {/* Page Numbers */}
+
+                {getPageNumbers().map((page, index) => {
+                  if (page === "...") {
+                    return (
+                      <span
+                        key={`dots-${index}`}
+                        className="px-2 text-sm text-gray-500"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => changePage(page as number)}
+                      className={`
+                        h-9
+                        min-w-9
+                        border
+                        px-2
+                        text-sm
+                        transition
+                        ${
+                          page === currentPage
+                            ? "border-[#6d001b] bg-[#6d001b] text-white"
+                            : "border-[#ead9d9] bg-white hover:bg-gray-100"
+                        }
+                      `}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+
+                {/* Next */}
+
+                <button
+                  onClick={() => changePage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`
+                    flex
+                    h-9
+                    w-9
+                    items-center
+                    justify-center
+                    border
+                    border-[#ead9d9]
+                    bg-white
+                    text-gray-600
+                    transition
+                    ${
+                      currentPage === totalPages
+                        ? "cursor-not-allowed opacity-40"
+                        : "hover:bg-gray-100"
+                    }
+                  `}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* ========================================
+          {/* =================================================
               RIGHT SIDEBAR
-          ======================================== */}
+          ================================================== */}
 
           <aside className="space-y-6">
-            {/* ======================================
+            {/* =================================================
                 POPULAR NEWS
-            ====================================== */}
+            ================================================== */}
 
             <section
               className="
@@ -829,53 +581,42 @@ export default function NewsPage() {
               </h2>
 
               <div>
-                {news
-                  .slice(0, 5)
-                  .map((item, index) => (
-                    <div
-                      key={item.id}
-                      onClick={() =>
-                        openNews(item.id)
-                      }
+                {news.slice(0, 5).map((item, index) => (
+                  <div
+                    key={item.id}
+                    onClick={() => openNews(item.id)}
+                    className="
+                      cursor-pointer
+                      border-b
+                      border-[#ead9d9]
+                      py-4
+                      last:border-b-0
+                    "
+                  >
+                    <h3
                       className="
-                        cursor-pointer
-                        border-b
-                        border-[#ead9d9]
-                        py-4
-                        last:border-b-0
+                        line-clamp-2
+                        font-[family-name:var(--font-devanagari)]
+                        text-sm
+                        font-medium
+                        leading-6
+                        hover:text-[#6d001b]
                       "
                     >
-                      <h3
-                        className="
-                          line-clamp-2
-                          font-[family-name:var(--font-devanagari)]
-                          text-sm
-                          font-medium
-                          leading-6
-                          hover:text-[#6d001b]
-                        "
-                      >
-                        {item.title ||
-                          "शीर्षक उपलब्ध छैन"}
-                      </h3>
+                      {item.title}
+                    </h3>
 
-                      <p
-                        className="
-                          mt-1
-                          text-[10px]
-                          text-gray-500
-                        "
-                      >
-                        {index + 1} दिन अघि
-                      </p>
-                    </div>
-                  ))}
+                    <p className="mt-1 text-[10px] text-gray-500">
+                      {index + 1} दिन अघि
+                    </p>
+                  </div>
+                ))}
               </div>
             </section>
 
-            {/* ======================================
+            {/* =================================================
                 NEWSLETTER
-            ====================================== */}
+            ================================================== */}
 
             <section
               className="
@@ -886,10 +627,7 @@ export default function NewsPage() {
                 text-center
               "
             >
-              <Mail
-                className="mx-auto text-[#6d001b]"
-                size={25}
-              />
+              <Mail className="mx-auto text-[#6d001b]" size={25} />
 
               <h2
                 className="
@@ -911,13 +649,12 @@ export default function NewsPage() {
                   text-gray-600
                 "
               >
-                राजनीतिका हर अहम खबर सीधै
-                अपने इनबक्समा पाउनुहोस्।
+                राजनीतिका हर अहम खबर सीधै आफ्नो इनबक्समा पाउनुहोस्।
               </p>
 
               <input
                 type="email"
-                placeholder="आपका ईमेल पता"
+                placeholder="तपाईंको ईमेल ठेगाना"
                 className="
                   mt-4
                   w-full
@@ -942,7 +679,6 @@ export default function NewsPage() {
                   text-xs
                   font-bold
                   text-white
-                  transition
                   hover:opacity-90
                 "
               >
