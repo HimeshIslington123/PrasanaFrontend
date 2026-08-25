@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
 import { Search, Clock } from "lucide-react";
+
+// ============================================================
+// TYPES
+// ============================================================
 
 type News = {
   id: number;
@@ -15,7 +19,33 @@ type News = {
   image: string;
 };
 
+// ============================================================
+// MAIN PAGE
+// ============================================================
+
 export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#faf8f6]">
+          <div className="flex min-h-[500px] items-center justify-center">
+            <p className="font-[family-name:var(--font-devanagari)] text-gray-600">
+              लोड हुँदैछ...
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <SearchContent />
+    </Suspense>
+  );
+}
+
+// ============================================================
+// SEARCH CONTENT
+// ============================================================
+
+function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -27,11 +57,20 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
 
   // ============================================================
+  // KEEP INPUT SYNCHRONIZED WITH URL
+  // ============================================================
+
+  useEffect(() => {
+    setSearchText(query);
+  }, [query]);
+
+  // ============================================================
   // FETCH SEARCH RESULTS
   // ============================================================
 
   useEffect(() => {
     const searchNews = async () => {
+      // If there is no search query
       if (!query.trim()) {
         setNews([]);
         setLoading(false);
@@ -73,11 +112,13 @@ export default function SearchPage() {
 
     if (!trimmedSearch) return;
 
-    router.push(`/search?q=${encodeURIComponent(trimmedSearch)}`);
+    router.push(
+      `/search?q=${encodeURIComponent(trimmedSearch)}`
+    );
   };
 
   // ============================================================
-  // OPEN NEWS
+  // OPEN INDIVIDUAL NEWS
   // ============================================================
 
   const openNews = (id: number) => {
@@ -89,6 +130,8 @@ export default function SearchPage() {
   // ============================================================
 
   const formatTime = (date: string) => {
+    if (!date) return "";
+
     const newsDate = new Date(date);
 
     return newsDate.toLocaleDateString("ne-NP", {
@@ -97,6 +140,10 @@ export default function SearchPage() {
       day: "numeric",
     });
   };
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
@@ -150,6 +197,7 @@ export default function SearchPage() {
               py-3
               font-[family-name:var(--font-devanagari)]
               text-base
+              text-[#171313]
               outline-none
               focus:border-[#6d001b]
             "
@@ -168,13 +216,39 @@ export default function SearchPage() {
               font-[family-name:var(--font-devanagari)]
               font-bold
               text-white
+              transition
+              hover:opacity-90
             "
           >
             <Search size={18} />
-            खोज्नुहोस्
+
+            <span className="hidden sm:inline">
+              खोज्नुहोस्
+            </span>
+
           </button>
 
         </form>
+
+        {/* ====================================================
+            INITIAL STATE - NO SEARCH YET
+        ==================================================== */}
+
+        {!query && !loading && (
+          <div className="py-16 text-center">
+
+            <p
+              className="
+                font-[family-name:var(--font-devanagari)]
+                text-lg
+                text-gray-500
+              "
+            >
+              खोज्नको लागि माथि कुनै शब्द लेख्नुहोस्।
+            </p>
+
+          </div>
+        )}
 
         {/* ====================================================
             SEARCH RESULT TEXT
@@ -189,7 +263,10 @@ export default function SearchPage() {
               text-gray-600
             "
           >
-            <span className="font-bold">"{query}"</span> का लागि खोज परिणाम
+            <span className="font-bold">
+              "{query}"
+            </span>{" "}
+            का लागि खोज परिणाम
           </p>
         )}
 
@@ -197,8 +274,9 @@ export default function SearchPage() {
             LOADING
         ==================================================== */}
 
-        {loading && (
+        {loading && query && (
           <div className="py-16 text-center">
+
             <p
               className="
                 font-[family-name:var(--font-devanagari)]
@@ -207,6 +285,7 @@ export default function SearchPage() {
             >
               समाचार खोजिँदैछ...
             </p>
+
           </div>
         )}
 
@@ -305,7 +384,17 @@ export default function SearchPage() {
                       "
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                    <div
+                      className="
+                        flex
+                        h-full
+                        items-center
+                        justify-center
+                        font-[family-name:var(--font-devanagari)]
+                        text-sm
+                        text-gray-400
+                      "
+                    >
                       कुनै तस्बिर छैन
                     </div>
                   )}
@@ -321,6 +410,7 @@ export default function SearchPage() {
                   {item.categoryname && (
                     <span
                       className="
+                        font-[family-name:var(--font-devanagari)]
                         text-xs
                         font-bold
                         text-[#6d001b]
@@ -376,7 +466,9 @@ export default function SearchPage() {
 
                     <Clock size={13} />
 
-                    <span>{formatTime(item.created)}</span>
+                    <span>
+                      {formatTime(item.created)}
+                    </span>
 
                   </div>
 
