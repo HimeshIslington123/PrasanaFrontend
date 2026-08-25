@@ -38,6 +38,7 @@ export default function AdPopup() {
           alt="Advertisement"
           width={1200}
           height={800}
+          
           priority
           className="max-h-[80vh] w-auto max-w-full rounded-xl object-contain"
         />

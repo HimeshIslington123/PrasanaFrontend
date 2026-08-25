@@ -2,9 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Search, UserCircle, Menu, X } from "lucide-react";
+import {
+  Search,
+  UserCircle,
+  Menu,
+  X,
+} from "lucide-react";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const categories = [
   { name: "गृहपृष्ठ", href: "/" },
@@ -16,14 +21,49 @@ const categories = [
 ];
 
 export default function Header() {
+  // Mobile menu
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Search
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+
   const pathname = usePathname();
+  const router = useRouter();
+
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const trimmedSearch = searchText.trim();
+
+    if (!trimmedSearch) return;
+
+    // Go to search page
+    router.push(`/search?q=${encodeURIComponent(trimmedSearch)}`);
+
+    // Close search bar
+    setSearchOpen(false);
+
+    // Close mobile menu
+    setMenuOpen(false);
+  };
 
   return (
     <header className="w-full bg-[var(--surface-container-lowest)]">
 
-      {/* Logo */}
+      {/* ======================================================
+          TOP HEADER
+      ====================================================== */}
+
       <div className="mx-auto flex h-[88px] max-w-[1728px] items-center justify-between px-6 sm:px-8 lg:px-12">
+
+        {/* ====================================================
+            LOGO
+        ==================================================== */}
 
         <Link href="/" className="shrink-0">
           <Image
@@ -36,22 +76,38 @@ export default function Header() {
           />
         </Link>
 
-        {/* Desktop */}
+        {/* ====================================================
+            DESKTOP
+        ==================================================== */}
+
         <div className="hidden items-center gap-7 md:flex">
 
+          {/* SEARCH */}
+
           <button
+            type="button"
+            onClick={() => setSearchOpen((prev) => !prev)}
             aria-label="Search"
             className="text-[var(--primary)] transition hover:opacity-70"
           >
-            <Search size={28} />
+            {searchOpen ? (
+              <X size={28} />
+            ) : (
+              <Search size={28} />
+            )}
           </button>
 
+          {/* ACCOUNT */}
+
           <button
+            type="button"
             aria-label="Account"
             className="text-[var(--primary)] transition hover:opacity-70"
           >
             <UserCircle size={30} />
           </button>
+
+          {/* LOGIN */}
 
           <Link
             href="/login"
@@ -62,31 +118,122 @@ export default function Header() {
 
         </div>
 
-        {/* Mobile */}
+        {/* ====================================================
+            MOBILE
+        ==================================================== */}
+
         <div className="flex items-center gap-4 md:hidden">
 
+          {/* SEARCH */}
+
           <button
+            type="button"
+            onClick={() => setSearchOpen((prev) => !prev)}
             aria-label="Search"
             className="text-[var(--primary)]"
           >
-            <Search size={23} />
+            {searchOpen ? (
+              <X size={23} />
+            ) : (
+              <Search size={23} />
+            )}
           </button>
 
+          {/* MENU */}
+
           <button
+            type="button"
             aria-label="Menu"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => setMenuOpen((prev) => !prev)}
             className="text-[var(--primary)]"
           >
             {menuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
 
         </div>
+
       </div>
+
+      {/* ======================================================
+          SEARCH BAR
+      ====================================================== */}
+
+      {searchOpen && (
+        <div className="border-t border-[var(--surface-container-high)]">
+
+          <form
+            onSubmit={handleSearch}
+            className="
+              mx-auto
+              flex
+              max-w-[1728px]
+              items-center
+              gap-3
+              px-6
+              py-4
+              sm:px-8
+              lg:px-12
+            "
+          >
+
+            {/* SEARCH INPUT */}
+
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="समाचार खोज्नुहोस्..."
+              autoFocus
+              className="
+                w-full
+                border
+                border-[var(--outline-variant)]
+                bg-transparent
+                px-4
+                py-3
+                text-[var(--on-surface)]
+                outline-none
+                transition
+                focus:border-[var(--primary)]
+              "
+            />
+
+            {/* SUBMIT BUTTON */}
+
+            <button
+              type="submit"
+              className="
+                shrink-0
+                bg-[var(--primary)]
+                px-5
+                py-3
+                font-[family-name:var(--font-devanagari)]
+                font-bold
+                text-white
+                transition
+                hover:opacity-90
+              "
+            >
+              खोज्नुहोस्
+            </button>
+
+          </form>
+
+        </div>
+      )}
+
+      {/* ======================================================
+          DIVIDER
+      ====================================================== */}
 
       <div className="border-t border-[var(--surface-container-high)]" />
 
-      {/* Desktop Navigation */}
+      {/* ======================================================
+          DESKTOP NAVIGATION
+      ====================================================== */}
+
       <nav className="hidden h-[74px] items-center justify-center border-b border-[var(--surface-container-high)] md:flex">
+
         <div className="flex items-center gap-11">
 
           {categories.map((category) => {
@@ -112,9 +259,13 @@ export default function Header() {
           })}
 
         </div>
+
       </nav>
 
-      {/* Mobile Navigation */}
+      {/* ======================================================
+          MOBILE NAVIGATION
+      ====================================================== */}
+
       {menuOpen && (
         <nav className="border-b border-[var(--surface-container-high)] bg-[var(--surface)] md:hidden">
 
@@ -139,6 +290,8 @@ export default function Header() {
               );
             })}
 
+            {/* LOGIN */}
+
             <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
@@ -148,6 +301,7 @@ export default function Header() {
             </Link>
 
           </div>
+
         </nav>
       )}
 

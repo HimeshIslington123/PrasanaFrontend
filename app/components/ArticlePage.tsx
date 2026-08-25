@@ -5,13 +5,13 @@ import { Share2, Bookmark, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-
+import Link from "next/link";
 type ArticlePageProps = {
   id: number;
   title: string;
 
   category?: string;
-  breadcrumb?: string[];
+
 
   authorName?: string;
   authorRole?: string;
@@ -41,7 +41,7 @@ export default function ArticlePage({
 
   category = "प्रविधि",
 
-  breadcrumb = ["गृहपृष्ठ", "समाज", "प्रविधि"],
+ 
 
   authorName = "प्रश्न समाचार ब्युरो",
   authorRole = "",
@@ -227,49 +227,41 @@ export default function ArticlePage({
             "
           >
 
-            {/* ==================================================
-                BREADCRUMB
-            =================================================== */}
+          <nav
+  aria-label="Breadcrumb"
+  className="
+    mb-6
+    flex
+    items-center
+    font-[family-name:var(--font-devanagari)]
+    text-[12px]
+    leading-[16px]
+  "
+>
+  {/* Home */}
+  <Link
+    href="/"
+    className="
+      text-[var(--secondary)]
+      transition-colors
+      hover:text-[var(--primary)]
+    "
+  >
+    गृहपृष्ठ
+  </Link>
 
-            <nav
-              aria-label="Breadcrumb"
-              className="
-                mb-6
-                flex
-                items-center
-                gap-1
-                overflow-hidden
-                font-[family-name:var(--font-devanagari)]
-                text-[12px]
-                leading-[16px]
-                text-[var(--secondary)]
-              "
-            >
-              {breadcrumb.map((item, index) => (
-                <div
-                  key={`${item}-${index}`}
-                  className="flex shrink-0 items-center"
-                >
-                  <span
-                    className={
-                      index === breadcrumb.length - 1
-                        ? "text-[var(--on-surface)]"
-                        : "text-[var(--secondary)]"
-                    }
-                  >
-                    {item}
-                  </span>
+  {/* Arrow */}
+  <ChevronRight
+    size={14}
+    strokeWidth={1.5}
+    className="mx-1 text-[var(--secondary)]"
+  />
 
-                  {index < breadcrumb.length - 1 && (
-                    <ChevronRight
-                      size={14}
-                      strokeWidth={1.5}
-                      className="mx-1 text-[var(--secondary)]"
-                    />
-                  )}
-                </div>
-              ))}
-            </nav>
+  {/* Category */}
+  <span className="text-[var(--on-surface)]">
+    {category}
+  </span>
+</nav>
 
             {/* ==================================================
                 ARTICLE HEADER
@@ -777,7 +769,7 @@ export default function ArticlePage({
 
               <div className="relative w-full overflow-hidden">
                 <Image
-                  src="/ad1.png"
+                  src="/ad6.jpeg"
                   alt="विज्ञापन"
                   width={320}
                   height={250}
@@ -789,7 +781,7 @@ export default function ArticlePage({
 
               <div className="relative w-full overflow-hidden">
                 <Image
-                  src="/ad2.png"
+                  src="/ad5.jpeg"
                   alt="विज्ञापन"
                   width={320}
                   height={250}
