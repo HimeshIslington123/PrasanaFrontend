@@ -34,6 +34,10 @@ type NewsResponse = {
 export default function NewsPage() {
   const router = useRouter();
 
+  // =========================================================
+  // STATE
+  // =========================================================
+
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +55,7 @@ export default function NewsPage() {
       try {
         setLoading(true);
 
-        const response = await axios.get<NewsResponse>(
+        const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/news`,
           {
             params: {
@@ -61,11 +65,64 @@ export default function NewsPage() {
           }
         );
 
-        setNews(response.data.data);
-        setTotalPages(response.data.totalPages);
+        console.log("NEWS API RESPONSE:", response.data);
+
+        // =====================================================
+        // NEW PAGINATED RESPONSE
+        //
+        // {
+        //   data: [...],
+        //   currentPage: 1,
+        //   pageSize: 10,
+        //   totalItems: 20,
+        //   totalPages: 2
+        // }
+        // =====================================================
+
+        if (Array.isArray(response.data?.data)) {
+          setNews(response.data.data);
+
+          setTotalPages(
+            typeof response.data.totalPages === "number"
+              ? response.data.totalPages
+              : 1
+          );
+
+          return;
+        }
+
+        // =====================================================
+        // OLD RESPONSE
+        //
+        // [
+        //   {...},
+        //   {...}
+        // ]
+        // =====================================================
+
+        if (Array.isArray(response.data)) {
+          setNews(response.data);
+          setTotalPages(1);
+
+          return;
+        }
+
+        // =====================================================
+        // UNEXPECTED RESPONSE
+        // =====================================================
+
+        console.error(
+          "Unexpected news API response:",
+          response.data
+        );
+
+        setNews([]);
+        setTotalPages(1);
       } catch (error) {
         console.error("Failed to fetch news:", error);
+
         setNews([]);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
@@ -101,7 +158,11 @@ export default function NewsPage() {
   // =========================================================
 
   const changePage = (page: number) => {
-    if (page < 1 || page > totalPages || page === currentPage) {
+    if (
+      page < 1 ||
+      page > totalPages ||
+      page === currentPage
+    ) {
       return;
     }
 
@@ -135,7 +196,10 @@ export default function NewsPage() {
     }
 
     const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
+    const end = Math.min(
+      totalPages - 1,
+      currentPage + 1
+    );
 
     for (let i = start; i <= end; i++) {
       pages.push(i);
@@ -175,7 +239,7 @@ export default function NewsPage() {
   // EMPTY
   // =========================================================
 
-  if (news.length === 0) {
+  if (!Array.isArray(news) || news.length === 0) {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
         <div className="mx-auto max-w-[1280px]">
@@ -192,12 +256,17 @@ export default function NewsPage() {
     );
   }
 
+  // =========================================================
+  // FEATURED + GRID NEWS
+  // =========================================================
+
   const featuredNews = news[0];
   const gridNews = news.slice(1);
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
       <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+
         {/* =====================================================
             CATEGORY TITLE
         ====================================================== */}
@@ -232,11 +301,13 @@ export default function NewsPage() {
             lg:grid-cols-[minmax(0,2fr)_270px]
           "
         >
-          {/* =================================================
+
+          {/* ===================================================
               LEFT CONTENT
-          ================================================= */}
+          ==================================================== */}
 
           <div>
+
             {/* =================================================
                 FEATURED NEWS
             ================================================== */}
@@ -253,7 +324,8 @@ export default function NewsPage() {
                 hover:shadow-md
               "
             >
-              {/* Image */}
+
+              {/* IMAGE */}
 
               <div
                 className="
@@ -282,9 +354,10 @@ export default function NewsPage() {
                 />
               </div>
 
-              {/* Content */}
+              {/* CONTENT */}
 
               <div className="p-5 sm:p-6">
+
                 <span
                   className="
                     inline-block
@@ -341,8 +414,11 @@ export default function NewsPage() {
                 >
                   <Clock size={13} />
 
-                  <span>{formatTime(featuredNews.created)}</span>
+                  <span>
+                    {formatTime(featuredNews.created)}
+                  </span>
                 </div>
+
               </div>
             </article>
 
@@ -375,7 +451,8 @@ export default function NewsPage() {
                       hover:shadow-md
                     "
                   >
-                    {/* Image */}
+
+                    {/* IMAGE */}
 
                     <div
                       className="
@@ -404,9 +481,10 @@ export default function NewsPage() {
                       />
                     </div>
 
-                    {/* Content */}
+                    {/* CONTENT */}
 
                     <div className="p-4">
+
                       <h3
                         className="
                           line-clamp-2
@@ -432,8 +510,11 @@ export default function NewsPage() {
                       >
                         <Clock size={13} />
 
-                        <span>{formatTime(item.created)}</span>
+                        <span>
+                          {formatTime(item.created)}
+                        </span>
                       </div>
+
                     </div>
                   </article>
                 ))}
@@ -458,10 +539,13 @@ export default function NewsPage() {
                   pt-5
                 "
               >
-                {/* Previous */}
+
+                {/* PREVIOUS */}
 
                 <button
-                  onClick={() => changePage(currentPage - 1)}
+                  onClick={() =>
+                    changePage(currentPage - 1)
+                  }
                   disabled={currentPage === 1}
                   className={`
                     flex
@@ -484,14 +568,19 @@ export default function NewsPage() {
                   <ChevronLeft size={16} />
                 </button>
 
-                {/* Page Numbers */}
+                {/* PAGE NUMBERS */}
 
                 {getPageNumbers().map((page, index) => {
+
                   if (page === "...") {
                     return (
                       <span
                         key={`dots-${index}`}
-                        className="px-2 text-sm text-gray-500"
+                        className="
+                          px-2
+                          text-sm
+                          text-gray-500
+                        "
                       >
                         ...
                       </span>
@@ -501,7 +590,9 @@ export default function NewsPage() {
                   return (
                     <button
                       key={page}
-                      onClick={() => changePage(page as number)}
+                      onClick={() =>
+                        changePage(page as number)
+                      }
                       className={`
                         h-9
                         min-w-9
@@ -521,11 +612,15 @@ export default function NewsPage() {
                   );
                 })}
 
-                {/* Next */}
+                {/* NEXT */}
 
                 <button
-                  onClick={() => changePage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    changePage(currentPage + 1)
+                  }
+                  disabled={
+                    currentPage === totalPages
+                  }
                   className={`
                     flex
                     h-9
@@ -546,15 +641,18 @@ export default function NewsPage() {
                 >
                   <ChevronRight size={16} />
                 </button>
+
               </div>
             )}
+
           </div>
 
-          {/* =================================================
+          {/* ===================================================
               RIGHT SIDEBAR
-          ================================================== */}
+          ==================================================== */}
 
           <aside className="space-y-6">
+
             {/* =================================================
                 POPULAR NEWS
             ================================================== */}
@@ -567,6 +665,7 @@ export default function NewsPage() {
                 p-4
               "
             >
+
               <h2
                 className="
                   border-b
@@ -584,7 +683,9 @@ export default function NewsPage() {
                 {news.slice(0, 5).map((item, index) => (
                   <div
                     key={item.id}
-                    onClick={() => openNews(item.id)}
+                    onClick={() =>
+                      openNews(item.id)
+                    }
                     className="
                       cursor-pointer
                       border-b
@@ -593,6 +694,7 @@ export default function NewsPage() {
                       last:border-b-0
                     "
                   >
+
                     <h3
                       className="
                         line-clamp-2
@@ -606,12 +708,20 @@ export default function NewsPage() {
                       {item.title}
                     </h3>
 
-                    <p className="mt-1 text-[10px] text-gray-500">
+                    <p
+                      className="
+                        mt-1
+                        text-[10px]
+                        text-gray-500
+                      "
+                    >
                       {index + 1} दिन अघि
                     </p>
+
                   </div>
                 ))}
               </div>
+
             </section>
 
             {/* =================================================
@@ -627,7 +737,11 @@ export default function NewsPage() {
                 text-center
               "
             >
-              <Mail className="mx-auto text-[#6d001b]" size={25} />
+
+              <Mail
+                className="mx-auto text-[#6d001b]"
+                size={25}
+              />
 
               <h2
                 className="
@@ -649,7 +763,8 @@ export default function NewsPage() {
                   text-gray-600
                 "
               >
-                राजनीतिका हर अहम खबर सीधै आफ्नो इनबक्समा पाउनुहोस्।
+                राजनीतिका हर अहम खबर सीधै आफ्नो
+                इनबक्समा पाउनुहोस्।
               </p>
 
               <input
@@ -684,8 +799,11 @@ export default function NewsPage() {
               >
                 सदस्यता लिने
               </button>
+
             </section>
+
           </aside>
+
         </div>
       </div>
     </main>
