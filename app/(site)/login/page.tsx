@@ -10,72 +10,88 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginPage() {
-  const context=useAuth();
+  const context = useAuth();
+
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-const router=useRouter();
+
+  const router = useRouter();
+
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
+  // If already logged in, redirect based on role
+  useEffect(() => {
+    if (!context.loading && context.user) {
+      if (
+        context.user.role === "Admin" ||
+        context.user.role === "admin"
+      ) {
+        router.replace("/admin/newsDashboard");
+      } else {
+        router.replace("/");
+      }
+    }
+  }, [context.user, context.loading, router]);
 
-useEffect(() => {
-  if (!context.loading && context.user) {
-    router.replace("/admin/newsDashboard");
-  }
-}, [context.user, context.loading, router]);
-
+  // Google Login
   const handleGoogleLogin = () => {
     window.location.href = `${API_BASE}/Authencation/google`;
   };
 
-const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+  // Normal Login
+  const handleLogin = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const response = await axios.post(
-      `${API_BASE}/Authencation/login`,
-      {
-        email: email,
-        password: password,
-      },
-      {
-        withCredentials: true,
-      }
-    );
-
-    console.log("Login successful:", response.data);
-
- 
-
-    router.push("/admin/newsDashboard");
-
-  } catch (error: any) {
-    console.error("Login error:", error);
-
-    if (error.response) {
-      setError(
-        error.response.data?.message ||
-        error.response.data ||
-        "इमेल वा पासवर्ड गलत छ।"
+    try {
+      const response = await axios.post(
+        `${API_BASE}/Authencation/login`,
+        {
+          email: email,
+          password: password,
+        },
+        {
+          withCredentials: true,
+        }
       );
-    } else {
-      setError("सर्भरसँग जडान हुन सकेन।");
+
+      console.log("Login successful:", response.data);
+
+   await context.refreshUser();
+
+const role = response.data.role;
+
+      // Redirect based on role
+      if (role === "Admin" || role === "admin") {
+        router.push("/admin/newsDashboard");
+      } else {
+        router.push("/");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+
+      if (error.response) {
+        setError(
+          error.response.data?.message ||
+            error.response.data ||
+            "इमेल वा पासवर्ड गलत छ।"
+        );
+      } else {
+        setError("सर्भरसँग जडान हुन सकेन।");
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
+  };
 
   return (
-
     <div className="min-h-screen w-full bg-[var(--background)] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px] bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl shadow-sm px-7 py-8 sm:px-9 sm:py-10">
 
@@ -104,7 +120,6 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
           onSubmit={handleLogin}
           className="flex flex-col gap-5"
         >
-
           {/* Email */}
           <div>
             <label
@@ -167,7 +182,9 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 
               <button
                 type="button"
-                onClick={() => setShowPassword((v) => !v)}
+                onClick={() =>
+                  setShowPassword((v) => !v)
+                }
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--secondary)]"
                 aria-label={
                   showPassword
@@ -191,7 +208,7 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
             </p>
           )}
 
-          {/* Login button */}
+          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
@@ -204,13 +221,15 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         {/* Divider */}
         <div className="flex items-center gap-4 my-6">
           <div className="h-px flex-1 bg-[var(--outline-variant)]" />
+
           <span className="text-sm text-[var(--secondary)]">
             वा
           </span>
+
           <div className="h-px flex-1 bg-[var(--outline-variant)]" />
         </div>
 
-        {/* Google */}
+        {/* Google Login */}
         <button
           type="button"
           onClick={handleGoogleLogin}
@@ -220,6 +239,7 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
           Google मार्फत लगइन
         </button>
 
+        {/* Register */}
         <p className="text-center text-sm text-[var(--on-surface)] mt-6">
           खाता छैन?{" "}
           <Link
