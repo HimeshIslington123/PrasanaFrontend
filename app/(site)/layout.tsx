@@ -12,7 +12,7 @@ export default function SiteLayout({
     <>
       <Header />
       <ContionousNewsTtile></ContionousNewsTtile>
-      <AdPopup></AdPopup>
+  
       {children}
       <Footer />
     </>
