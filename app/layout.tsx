@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "./context/AuthContext";
 
 const notoSans = Noto_Sans({
   subsets: ["devanagari", "latin"],
@@ -303,7 +304,10 @@ export default function RootLayout({
   return (
     <html lang="ne">
       <body className={notoSans.variable}>
-        {children}
+         <AuthProvider>
+          {children}
+        </AuthProvider>
+     
       </body>
     </html>
   );

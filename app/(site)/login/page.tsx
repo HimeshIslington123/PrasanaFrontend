@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginPage() {
+  const context=useAuth();
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,13 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 const router=useRouter();
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+
+useEffect(() => {
+  if (!context.loading && context.user) {
+    router.replace("/admin/newsDashboard");
+  }
+}, [context.user, context.loading, router]);
 
   const handleGoogleLogin = () => {
     window.location.href = `${API_BASE}/Authencation/google`;
@@ -62,7 +71,11 @@ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
   }
 };
 
+
+
+
   return (
+
     <div className="min-h-screen w-full bg-[var(--background)] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px] bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl shadow-sm px-7 py-8 sm:px-9 sm:py-10">
 
