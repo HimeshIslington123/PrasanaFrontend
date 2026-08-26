@@ -651,7 +651,7 @@ export default function NewsPage() {
               RIGHT SIDEBAR
           ==================================================== */}
 
-          <aside className="space-y-6">
+          <aside className="sticky top-6 self-start space-y-6">
 
             {/* =================================================
                 POPULAR NEWS
