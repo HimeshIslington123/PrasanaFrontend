@@ -68,7 +68,7 @@ export default function Header() {
         {/* LOGO */}
         <Link href="/" className="shrink-0">
           <Image
-            src="/logo.png"
+            src="/logo1.png"
             alt="प्रश्न"
             width={105}
             height={60}
