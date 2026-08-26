@@ -18,7 +18,7 @@ export default function AdPopup() {
   if (!showAd) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
 
       {/* Ad container */}
       <div className="relative max-h-[80vh] max-w-[700px]">
@@ -26,7 +26,7 @@ export default function AdPopup() {
         {/* Close button */}
         <button
           onClick={() => setShowAd(false)}
-          className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
+          className="absolute right-2 top-2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/90 text-white hover:bg-black"
           aria-label="Close advertisement"
         >
           <X size={24} />
@@ -34,7 +34,7 @@ export default function AdPopup() {
 
         {/* Advertisement */}
         <Image
-          src="/ad3.png"
+          src="/ad7.jpeg"
           alt="Advertisement"
           width={1200}
           height={800}

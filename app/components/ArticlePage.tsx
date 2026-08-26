@@ -781,7 +781,7 @@ export default function ArticlePage({
 
               <div className="relative w-full overflow-hidden">
                 <Image
-                  src="/ad5.jpeg"
+                  src="/ad7.jpeg"
                   alt="विज्ञापन"
                   width={320}
                   height={250}
