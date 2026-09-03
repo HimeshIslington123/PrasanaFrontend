@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import axios from "axios";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Clock,
   ChevronLeft,
   ChevronRight,
   Mail,
 } from "lucide-react";
+
+// ============================================================
+// TYPES
+// ============================================================
 
 type News = {
   id: number;
@@ -18,138 +22,48 @@ type News = {
   categoryname: string;
   created: string;
   image: string;
+  slug: string;
   comments:
     | {
         newsId: number;
         content: string;
       }[]
     | null;
+  pullQuote?: string | null;
+  heroImageSrc?: string | null;
 };
 
-type NewsResponse = {
-  data: News[];
-  currentPage: number;
-  pageSize: number;
-  totalItems: number;
-  totalPages: number;
+// ============================================================
+// PROPS
+// ============================================================
+
+type HomeNewsProps = {
+  initialNews: News[];
+  initialTotalPages: number;
 };
 
-export default function NewsPage() {
-  const router = useRouter();
+// ============================================================
+// COMPONENT
+// ============================================================
 
+export default function HomeNews({
+  initialNews,
+  initialTotalPages,
+}: HomeNewsProps) {
   // ==========================================================
   // STATE
   // ==========================================================
 
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [news, setNews] = useState<News[]>(initialNews);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+
+  const [totalPages, setTotalPages] =
+    useState(initialTotalPages);
+
+  const [loading, setLoading] = useState(false);
 
   const pageSize = 10;
-
-  // ==========================================================
-  // GET NEWS
-  // ==========================================================
-
-  useEffect(() => {
-    const getNews = async () => {
-      try {
-        setLoading(true);
-
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/news`,
-          {
-            params: {
-              page: currentPage,
-              pageSize,
-            },
-          }
-        );
-
-        console.log(
-          "NEWS API RESPONSE:",
-          response.data
-        );
-
-        const responseData = response.data;
-
-        // ======================================================
-        // NEW PAGINATED RESPONSE
-        //
-        // {
-        //   data: [...],
-        //   currentPage: 1,
-        //   pageSize: 10,
-        //   totalItems: 20,
-        //   totalPages: 2
-        // }
-        // ======================================================
-
-        if (Array.isArray(responseData?.data)) {
-          setNews(responseData.data);
-
-          setTotalPages(
-            typeof responseData.totalPages === "number"
-              ? responseData.totalPages
-              : 1
-          );
-
-          return;
-        }
-
-        // ======================================================
-        // OLD RESPONSE
-        //
-        // [
-        //   {...},
-        //   {...}
-        // ]
-        // ======================================================
-
-        if (Array.isArray(responseData)) {
-          setNews(responseData);
-
-          setTotalPages(1);
-
-          return;
-        }
-
-        // ======================================================
-        // INVALID RESPONSE
-        // ======================================================
-
-        console.error(
-          "Unexpected API response:",
-          responseData
-        );
-
-        setNews([]);
-        setTotalPages(1);
-      } catch (error) {
-        console.error(
-          "Failed to fetch news:",
-          error
-        );
-
-        setNews([]);
-        setTotalPages(1);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getNews();
-  }, [currentPage]);
-
-  // ==========================================================
-  // OPEN NEWS
-  // ==========================================================
-
-  const openNews = (id: number) => {
-    router.push(`/News/${id}`);
-  };
 
   // ==========================================================
   // FORMAT DATE
@@ -158,19 +72,7 @@ export default function NewsPage() {
   const formatTime = (date: string) => {
     const newsDate = new Date(date);
 
-    const nepaliDigits = (
-      value: number | string
-    ) => {
-      return String(value).replace(
-        /\d/g,
-        (digit) =>
-          "०१२३४५६७८९"[Number(digit)]
-      );
-    };
-
-    const day = nepaliDigits(
-      newsDate.getUTCDate()
-    );
+    const day = newsDate.getUTCDate();
 
     const monthNames = [
       "जनवरी",
@@ -190,27 +92,102 @@ export default function NewsPage() {
     const month =
       monthNames[newsDate.getUTCMonth()];
 
-    const year = nepaliDigits(
-      newsDate.getUTCFullYear()
-    );
+    const year = newsDate.getUTCFullYear();
 
     return `${year} ${month} ${day}`;
+  };
+
+  // ==========================================================
+  // GET NEWS FOR PAGINATION
+  // ==========================================================
+
+  const getNews = async (page: number) => {
+    try {
+      setLoading(true);
+
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL;
+
+      if (!API_URL) {
+        throw new Error(
+          "NEXT_PUBLIC_API_URL is not configured"
+        );
+      }
+
+      const response = await axios.get(
+        `${API_URL}/news`,
+        {
+          params: {
+            page,
+            pageSize,
+          },
+        }
+      );
+
+      // ======================================================
+      // PAGINATED RESPONSE
+      // ======================================================
+
+      if (Array.isArray(response.data?.data)) {
+        setNews(response.data.data);
+
+        setTotalPages(
+          typeof response.data.totalPages ===
+            "number"
+            ? response.data.totalPages
+            : 1
+        );
+
+        return;
+      }
+
+      // ======================================================
+      // OLD ARRAY RESPONSE
+      // ======================================================
+
+      if (Array.isArray(response.data)) {
+        setNews(response.data);
+        setTotalPages(1);
+
+        return;
+      }
+
+      // ======================================================
+      // INVALID RESPONSE
+      // ======================================================
+
+      setNews([]);
+      setTotalPages(1);
+    } catch (error) {
+      console.error(
+        "Failed to fetch news:",
+        error
+      );
+
+      setNews([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ==========================================================
   // CHANGE PAGE
   // ==========================================================
 
-  const changePage = (page: number) => {
+  const changePage = async (page: number) => {
     if (
       page < 1 ||
       page > totalPages ||
-      page === currentPage
+      page === currentPage ||
+      loading
     ) {
       return;
     }
 
     setCurrentPage(page);
+
+    await getNews(page);
 
     window.scrollTo({
       top: 0,
@@ -226,11 +203,7 @@ export default function NewsPage() {
     const pages: (number | string)[] = [];
 
     if (totalPages <= 5) {
-      for (
-        let i = 1;
-        i <= totalPages;
-        i++
-      ) {
+      for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
 
@@ -253,18 +226,11 @@ export default function NewsPage() {
       currentPage + 1
     );
 
-    for (
-      let i = start;
-      i <= end;
-      i++
-    ) {
+    for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
-    if (
-      currentPage <
-      totalPages - 2
-    ) {
+    if (currentPage < totalPages - 2) {
       pages.push("...");
     }
 
@@ -272,22 +238,6 @@ export default function NewsPage() {
 
     return pages;
   };
-
-  // ==========================================================
-  // LOADING
-  // ==========================================================
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
-        <div className="mx-auto max-w-[1280px]">
-          <p className="text-center">
-            समाचार लोड हुँदैछ...
-          </p>
-        </div>
-      </main>
-    );
-  }
 
   // ==========================================================
   // EMPTY
@@ -300,7 +250,12 @@ export default function NewsPage() {
     return (
       <main className="min-h-screen bg-[#faf8f6] px-5 py-10">
         <div className="mx-auto max-w-[1280px]">
-          <p className="text-center">
+          <p
+            className="
+              text-center
+              font-[family-name:var(--font-devanagari)]
+            "
+          >
             कुनै समाचार भेटिएन।
           </p>
         </div>
@@ -309,7 +264,7 @@ export default function NewsPage() {
   }
 
   // ==========================================================
-  // FEATURED NEWS
+  // FEATURED + GRID
   // ==========================================================
 
   const featuredNews = news[0];
@@ -322,7 +277,16 @@ export default function NewsPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f6]">
-      <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        className="
+          mx-auto
+          max-w-[1280px]
+          px-4
+          py-8
+          sm:px-6
+          lg:px-8
+        "
+      >
 
         {/* ==================================================
             PAGE TITLE
@@ -342,8 +306,7 @@ export default function NewsPage() {
               sm:text-4xl
             "
           >
-            {featuredNews.categoryname ||
-              "राजनीति"}
+            ताजा समाचार
           </h1>
         </div>
 
@@ -361,7 +324,7 @@ export default function NewsPage() {
         >
 
           {/* =================================================
-              LEFT
+              LEFT CONTENT
           ================================================== */}
 
           <div>
@@ -370,120 +333,126 @@ export default function NewsPage() {
                 FEATURED NEWS
             ================================================ */}
 
-            <article
-              onClick={() =>
-                openNews(
-                  featuredNews.id
-                )
-              }
-              className="
-                cursor-pointer
-                overflow-hidden
-                border
-                border-[#ead9d9]
-                bg-[#fffdfc]
-                transition
-                hover:shadow-md
-              "
+            <Link
+              href={`/news/${featuredNews.slug}`}
+              className="block"
             >
-              <div
+              <article
                 className="
-                  relative
-                  aspect-[16/9]
-                  w-full
+                  cursor-pointer
                   overflow-hidden
-                  bg-gray-100
+                  border
+                  border-[#ead9d9]
+                  bg-[#fffdfc]
+                  transition
+                  hover:shadow-md
                 "
               >
-                <Image
-                  src={featuredNews.image}
-                  alt={featuredNews.title}
-                  fill
-                  priority
-                  sizes="
-                    (max-width: 1024px) 100vw,
-                    850px
-                  "
-                  className="
-                    object-cover
-                    transition
-                    duration-500
-                    hover:scale-105
-                  "
-                />
-              </div>
 
-              <div className="p-5 sm:p-6">
-
-                <span
-                  className="
-                    inline-block
-                    border
-                    border-[#8a1d36]
-                    px-2
-                    py-1
-                    text-[11px]
-                    font-bold
-                    text-[#6d001b]
-                  "
-                >
-                  प्रमुख खबर
-                </span>
-
-                <h2
-                  className="
-                    mt-3
-                    text-2xl
-                    font-bold
-                    leading-tight
-                    text-[#171313]
-                    sm:text-3xl
-                  "
-                >
-                  {featuredNews.title}
-                </h2>
-
-                <p
-                  className="
-                    mt-3
-                    line-clamp-2
-                    text-sm
-                    leading-7
-                    text-gray-600
-                    sm:text-base
-                  "
-                >
-                  {featuredNews.content}
-                </p>
+                {/* IMAGE */}
 
                 <div
                   className="
-                    mt-4
-                    flex
-                    items-center
-                    gap-2
-                    text-xs
-                    text-gray-500
+                    relative
+                    aspect-[16/9]
+                    w-full
+                    overflow-hidden
+                    bg-gray-100
                   "
                 >
-                  <Clock size={13} />
-
-                  <time
-                    dateTime={
-                      featuredNews.created
-                    }
-                  >
-                    {formatTime(
-                      featuredNews.created
-                    )}
-                  </time>
+                  <Image
+                    src={featuredNews.image}
+                    alt={featuredNews.title}
+                    fill
+                    priority
+                    sizes="
+                      (max-width: 1024px) 100vw,
+                      850px
+                    "
+                    className="
+                      object-cover
+                      transition
+                      duration-500
+                      hover:scale-105
+                    "
+                  />
                 </div>
 
-              </div>
-            </article>
+                {/* CONTENT */}
+
+                <div className="p-5 sm:p-6">
+
+                  <span
+                    className="
+                      inline-block
+                      border
+                      border-[#8a1d36]
+                      px-2
+                      py-1
+                      font-[family-name:var(--font-devanagari)]
+                      text-[11px]
+                      font-bold
+                      text-[#6d001b]
+                    "
+                  >
+                    प्रमुख खबर
+                  </span>
+
+                  <h2
+                    className="
+                      mt-3
+                      font-[family-name:var(--font-devanagari)]
+                      text-2xl
+                      font-bold
+                      leading-tight
+                      text-[#171313]
+                      sm:text-3xl
+                    "
+                  >
+                    {featuredNews.title}
+                  </h2>
+
+                  <p
+                    className="
+                      mt-3
+                      line-clamp-2
+                      font-[family-name:var(--font-devanagari)]
+                      text-sm
+                      leading-7
+                      text-gray-600
+                      sm:text-base
+                    "
+                  >
+                    {featuredNews.content}
+                  </p>
+
+                  <div
+                    className="
+                      mt-4
+                      flex
+                      items-center
+                      gap-2
+                      text-xs
+                      text-gray-500
+                    "
+                  >
+                    <Clock size={13} />
+
+                    <time
+                      dateTime={featuredNews.created}
+                    >
+                      {formatTime(
+                        featuredNews.created
+                      )}
+                    </time>
+                  </div>
+
+                </div>
+              </article>
+            </Link>
 
             {/* =================================================
-                OTHER NEWS
+                NEWS GRID
             ================================================== */}
 
             {gridNews.length > 0 && (
@@ -497,89 +466,95 @@ export default function NewsPage() {
                 "
               >
                 {gridNews.map((item) => (
-                  <article
+                  <Link
                     key={item.id}
-                    onClick={() =>
-                      openNews(item.id)
-                    }
-                    className="
-                      cursor-pointer
-                      overflow-hidden
-                      border
-                      border-[#ead9d9]
-                      bg-[#fffdfc]
-                      transition
-                      hover:-translate-y-1
-                      hover:shadow-md
-                    "
+                    href={`/news/${item.slug}`}
+                    className="block"
                   >
-
-                    <div
+                    <article
                       className="
-                        relative
-                        aspect-[16/9]
-                        w-full
+                        h-full
+                        cursor-pointer
                         overflow-hidden
-                        bg-gray-100
+                        border
+                        border-[#ead9d9]
+                        bg-[#fffdfc]
+                        transition
+                        hover:-translate-y-1
+                        hover:shadow-md
                       "
                     >
-                      <Image
-                        src={item.image}
-                        alt={item.title}
-                        fill
-                        sizes="
-                          (max-width: 640px) 100vw,
-                          (max-width: 1024px) 50vw,
-                          400px
-                        "
-                        className="
-                          object-cover
-                          transition
-                          duration-500
-                          hover:scale-105
-                        "
-                      />
-                    </div>
 
-                    <div className="p-4">
-
-                      <h3
-                        className="
-                          line-clamp-2
-                          text-lg
-                          font-bold
-                          leading-snug
-                          text-[#171313]
-                        "
-                      >
-                        {item.title}
-                      </h3>
+                      {/* IMAGE */}
 
                       <div
                         className="
-                          mt-3
-                          flex
-                          items-center
-                          gap-2
-                          text-xs
-                          text-gray-500
+                          relative
+                          aspect-[16/9]
+                          w-full
+                          overflow-hidden
+                          bg-gray-100
                         "
                       >
-                        <Clock size={13} />
-
-                        <time
-                          dateTime={
-                            item.created
-                          }
-                        >
-                          {formatTime(
-                            item.created
-                          )}
-                        </time>
+                        <Image
+                          src={item.image}
+                          alt={item.title}
+                          fill
+                          sizes="
+                            (max-width: 640px) 100vw,
+                            (max-width: 1024px) 50vw,
+                            400px
+                          "
+                          className="
+                            object-cover
+                            transition
+                            duration-500
+                            hover:scale-105
+                          "
+                        />
                       </div>
 
-                    </div>
-                  </article>
+                      {/* CONTENT */}
+
+                      <div className="p-4">
+
+                        <h2
+                          className="
+                            line-clamp-2
+                            font-[family-name:var(--font-devanagari)]
+                            text-lg
+                            font-bold
+                            leading-snug
+                            text-[#171313]
+                          "
+                        >
+                          {item.title}
+                        </h2>
+
+                        <div
+                          className="
+                            mt-3
+                            flex
+                            items-center
+                            gap-2
+                            text-xs
+                            text-gray-500
+                          "
+                        >
+                          <Clock size={13} />
+
+                          <time
+                            dateTime={item.created}
+                          >
+                            {formatTime(
+                              item.created
+                            )}
+                          </time>
+                        </div>
+
+                      </div>
+                    </article>
+                  </Link>
                 ))}
               </div>
             )}
@@ -589,7 +564,8 @@ export default function NewsPage() {
             ================================================== */}
 
             {totalPages > 1 && (
-              <div
+              <nav
+                aria-label="समाचार पृष्ठहरू"
                 className="
                   mt-12
                   flex
@@ -613,8 +589,10 @@ export default function NewsPage() {
                     )
                   }
                   disabled={
-                    currentPage === 1
+                    currentPage === 1 ||
+                    loading
                   }
+                  aria-label="अघिल्लो पृष्ठ"
                   className={`
                     flex
                     h-9
@@ -627,7 +605,8 @@ export default function NewsPage() {
                     text-gray-600
                     transition
                     ${
-                      currentPage === 1
+                      currentPage === 1 ||
+                      loading
                         ? "cursor-not-allowed opacity-40"
                         : "hover:bg-gray-100"
                     }
@@ -640,9 +619,7 @@ export default function NewsPage() {
 
                 {getPageNumbers().map(
                   (page, index) => {
-                    if (
-                      page === "..."
-                    ) {
+                    if (page === "...") {
                       return (
                         <span
                           key={`dots-${index}`}
@@ -665,6 +642,12 @@ export default function NewsPage() {
                           changePage(
                             page as number
                           )
+                        }
+                        disabled={loading}
+                        aria-current={
+                          page === currentPage
+                            ? "page"
+                            : undefined
                         }
                         className={`
                           h-9
@@ -698,8 +681,10 @@ export default function NewsPage() {
                   }
                   disabled={
                     currentPage ===
-                    totalPages
+                      totalPages ||
+                    loading
                   }
+                  aria-label="अर्को पृष्ठ"
                   className={`
                     flex
                     h-9
@@ -713,7 +698,8 @@ export default function NewsPage() {
                     transition
                     ${
                       currentPage ===
-                      totalPages
+                        totalPages ||
+                      loading
                         ? "cursor-not-allowed opacity-40"
                         : "hover:bg-gray-100"
                     }
@@ -722,7 +708,7 @@ export default function NewsPage() {
                   <ChevronRight size={16} />
                 </button>
 
-              </div>
+              </nav>
             )}
 
           </div>
@@ -731,10 +717,17 @@ export default function NewsPage() {
               RIGHT SIDEBAR
           ================================================== */}
 
-          <aside className="space-y-6">
+          <aside
+            className="
+              sticky
+              top-6
+              self-start
+              space-y-6
+            "
+          >
 
             {/* =================================================
-                POPULAR
+                POPULAR NEWS
             ================================================== */}
 
             <section
@@ -751,6 +744,7 @@ export default function NewsPage() {
                   border-b
                   border-[#b78a96]
                   pb-2
+                  font-[family-name:var(--font-devanagari)]
                   text-xl
                   font-bold
                 "
@@ -761,26 +755,26 @@ export default function NewsPage() {
               <div>
                 {news
                   .slice(0, 5)
-                  .map(
-                    (item, index) => (
+                  .map((item, index) => (
+                    <Link
+                      key={item.id}
+                      href={`/news/${item.slug}`}
+                      className="block"
+                    >
                       <div
-                        key={item.id}
-                        onClick={() =>
-                          openNews(
-                            item.id
-                          )
-                        }
                         className="
                           cursor-pointer
                           border-b
                           border-[#ead9d9]
                           py-4
+                          last:border-b-0
                         "
                       >
 
                         <h3
                           className="
                             line-clamp-2
+                            font-[family-name:var(--font-devanagari)]
                             text-sm
                             font-medium
                             leading-6
@@ -790,13 +784,19 @@ export default function NewsPage() {
                           {item.title}
                         </h3>
 
-                        <p className="mt-1 text-[10px] text-gray-500">
+                        <p
+                          className="
+                            mt-1
+                            text-[10px]
+                            text-gray-500
+                          "
+                        >
                           {index + 1} दिन अघि
                         </p>
 
                       </div>
-                    )
-                  )}
+                    </Link>
+                  ))}
               </div>
 
             </section>
@@ -820,17 +820,34 @@ export default function NewsPage() {
                 size={25}
               />
 
-              <h2 className="mt-3 text-xl font-bold">
+              <h2
+                className="
+                  mt-3
+                  font-[family-name:var(--font-devanagari)]
+                  text-xl
+                  font-bold
+                "
+              >
                 न्यूजलेटर
               </h2>
 
-              <p className="mt-2 text-xs leading-5 text-gray-600">
-                राजनीतिका हर अहम खबर सीधै अपने इनबक्स में पाएं।
+              <p
+                className="
+                  mt-2
+                  font-[family-name:var(--font-devanagari)]
+                  text-xs
+                  leading-5
+                  text-gray-600
+                "
+              >
+                राजनीतिका हर अहम खबर सीधै आफ्नो
+                इनबक्समा पाउनुहोस्।
               </p>
 
               <input
                 type="email"
-                placeholder="आपका ईमेल पता"
+                placeholder="तपाईंको ईमेल ठेगाना"
+                aria-label="तपाईंको ईमेल ठेगाना"
                 className="
                   mt-4
                   w-full
@@ -841,6 +858,7 @@ export default function NewsPage() {
                   py-3
                   text-sm
                   outline-none
+                  focus:border-[#6d001b]
                 "
               />
 
@@ -851,9 +869,11 @@ export default function NewsPage() {
                   w-full
                   bg-[#6d001b]
                   py-2.5
+                  font-[family-name:var(--font-devanagari)]
                   text-xs
                   font-bold
                   text-white
+                  hover:opacity-90
                 "
               >
                 सदस्यता लिने

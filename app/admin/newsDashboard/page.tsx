@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
+  Link as LinkIcon,
 } from "lucide-react";
 
 // ==========================================
@@ -27,6 +28,7 @@ type News = {
   categoryname: string;
   created: string;
   image?: string | null;
+  slug: string;
   comments?: unknown[] | null;
   pullQuote?: string | null;
   heroImageSrc?: string | null;
@@ -91,6 +93,7 @@ export default function AdminNewsPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [slug, setSlug] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [pullQuote, setPullQuote] = useState("");
   const [heroImageSrc, setHeroImageSrc] = useState("");
@@ -130,19 +133,10 @@ export default function AdminNewsPage() {
 
       const result: NewsResponse = await response.json();
 
-      // IMPORTANT:
-      // Your API returns:
-      // {
-      //   data: [...],
-      //   currentPage: 1,
-      //   totalPages: 1
-      // }
-
       setNews(result.data);
       setCurrentPage(result.currentPage);
       setTotalPages(result.totalPages);
       setTotalItems(result.totalItems);
-
     } catch (error) {
       console.error(error);
 
@@ -174,7 +168,6 @@ export default function AdminNewsPage() {
       const data = await response.json();
 
       setCategories(data);
-
     } catch (error) {
       console.error(error);
     }
@@ -199,6 +192,7 @@ export default function AdminNewsPage() {
     setTitle("");
     setContent("");
     setCategoryId("");
+    setSlug("");
     setImage(null);
     setPullQuote("");
     setHeroImageSrc("");
@@ -213,6 +207,8 @@ export default function AdminNewsPage() {
   ) => {
     e.preventDefault();
 
+    setError("");
+
     if (!title.trim()) {
       setError("Title is required.");
       return;
@@ -223,20 +219,45 @@ export default function AdminNewsPage() {
       return;
     }
 
+    if (!slug.trim()) {
+      setError("URL Slug is required.");
+      return;
+    }
+
     if (!categoryId) {
       setError("Please select a category.");
       return;
     }
 
+    if (!image) {
+      setError("Image is required.");
+      return;
+    }
+
+    // Clean the manually entered slug
+    const cleanSlug = slug
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
+    // Only allow English letters, numbers and hyphens
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(cleanSlug)) {
+      setError(
+        "Slug can only contain lowercase English letters, numbers and hyphens."
+      );
+      return;
+    }
+
     try {
       setSaving(true);
-      setError("");
 
       const formData = new FormData();
 
       formData.append("Title", title.trim());
       formData.append("Content", content.trim());
+      formData.append("Slug", cleanSlug);
       formData.append("CategoryId", categoryId);
+      formData.append("Image", image);
 
       if (pullQuote.trim()) {
         formData.append(
@@ -252,10 +273,6 @@ export default function AdminNewsPage() {
         );
       }
 
-      if (image) {
-        formData.append("Image", image);
-      }
-
       const response = await fetch(`${API_URL}/News`, {
         method: "POST",
         credentials: "include",
@@ -263,18 +280,35 @@ export default function AdminNewsPage() {
       });
 
       if (!response.ok) {
-        const message = await response.text();
+        let message = "Failed to create news";
 
-        throw new Error(
-          message || "Failed to create news"
-        );
+        try {
+          const data = await response.json();
+
+          message =
+            data?.message ||
+            data?.title ||
+            data ||
+            message;
+
+          if (typeof message !== "string") {
+            message = "Failed to create news";
+          }
+        } catch {
+          const text = await response.text();
+
+          if (text) {
+            message = text;
+          }
+        }
+
+        throw new Error(message);
       }
 
       await fetchNews(1);
 
       resetCreateForm();
       setShowCreate(false);
-
     } catch (error) {
       console.error(error);
 
@@ -302,6 +336,7 @@ export default function AdminNewsPage() {
     setEditHeroImageSrc(item.heroImageSrc || "");
 
     setShowEdit(true);
+    setError("");
   };
 
   // ==========================================
@@ -315,6 +350,8 @@ export default function AdminNewsPage() {
 
     if (!editingNews) return;
 
+    setError("");
+
     if (!editTitle.trim()) {
       setError("Title is required.");
       return;
@@ -327,7 +364,6 @@ export default function AdminNewsPage() {
 
     try {
       setSaving(true);
-      setError("");
 
       const response = await fetch(
         `${API_URL}/News/${editingNews.id}`,
@@ -342,25 +378,44 @@ export default function AdminNewsPage() {
           body: JSON.stringify({
             title: editTitle.trim(),
             content: editContent.trim(),
-            pullQuote: editPullQuote.trim() || null,
-            heroImageSrc: editHeroImageSrc.trim() || null,
+            pullQuote:
+              editPullQuote.trim() || null,
+            heroImageSrc:
+              editHeroImageSrc.trim() || null,
           }),
         }
       );
 
       if (!response.ok) {
-        const message = await response.text();
+        let message = "Failed to update news";
 
-        throw new Error(
-          message || "Failed to update news"
-        );
+        try {
+          const data = await response.json();
+
+          message =
+            data?.message ||
+            data?.title ||
+            data ||
+            message;
+
+          if (typeof message !== "string") {
+            message = "Failed to update news";
+          }
+        } catch {
+          const text = await response.text();
+
+          if (text) {
+            message = text;
+          }
+        }
+
+        throw new Error(message);
       }
 
       await fetchNews(currentPage);
 
       setShowEdit(false);
       setEditingNews(null);
-
     } catch (error) {
       console.error(error);
 
@@ -398,22 +453,40 @@ export default function AdminNewsPage() {
       );
 
       if (!response.ok) {
-        const message = await response.text();
+        let message = "Failed to delete news";
 
-        throw new Error(
-          message || "Failed to delete news"
-        );
+        try {
+          const data = await response.json();
+
+          message =
+            data?.message ||
+            data?.title ||
+            data ||
+            message;
+
+          if (typeof message !== "string") {
+            message = "Failed to delete news";
+          }
+        } catch {
+          const text = await response.text();
+
+          if (text) {
+            message = text;
+          }
+        }
+
+        throw new Error(message);
       }
 
-      // If we deleted the last item on a page,
-      // go to the previous page if necessary
-
-      const newTotalItems = totalItems - 1;
-
-      const newTotalPages = Math.max(
-        1,
-        Math.ceil(newTotalItems / PAGE_SIZE)
+      const newTotalItems = Math.max(
+        0,
+        totalItems - 1
       );
+
+      const newTotalPages =
+        newTotalItems === 0
+          ? 1
+          : Math.ceil(newTotalItems / PAGE_SIZE);
 
       const pageToFetch =
         currentPage > newTotalPages
@@ -421,7 +494,6 @@ export default function AdminNewsPage() {
           : currentPage;
 
       await fetchNews(pageToFetch);
-
     } catch (error) {
       console.error(error);
 
@@ -448,7 +520,10 @@ export default function AdminNewsPage() {
       return (
         item.title.toLowerCase().includes(query) ||
         item.content.toLowerCase().includes(query) ||
-        item.categoryname.toLowerCase().includes(query)
+        item.categoryname
+          .toLowerCase()
+          .includes(query) ||
+        item.slug.toLowerCase().includes(query)
       );
     });
   }, [news, search]);
@@ -494,7 +569,6 @@ export default function AdminNewsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] p-6 text-[var(--foreground)]">
-
       <div className="mx-auto max-w-7xl">
 
         {/* ======================================
@@ -502,17 +576,13 @@ export default function AdminNewsPage() {
         ====================================== */}
 
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-
           <div className="flex items-center gap-4">
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--primary)] text-white">
-
               <Newspaper size={24} />
-
             </div>
 
             <div>
-
               <h1 className="text-3xl font-bold">
                 News Management
               </h1>
@@ -520,7 +590,6 @@ export default function AdminNewsPage() {
               <p className="text-sm text-[var(--on-surface-variant)]">
                 Create, edit and manage news articles
               </p>
-
             </div>
 
           </div>
@@ -528,6 +597,7 @@ export default function AdminNewsPage() {
           <button
             onClick={() => {
               resetCreateForm();
+              setError("");
               setShowCreate(true);
             }}
             className="flex items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-3 font-medium text-white transition hover:opacity-90"
@@ -535,7 +605,6 @@ export default function AdminNewsPage() {
             <Plus size={20} />
             Add News
           </button>
-
         </div>
 
         {/* ======================================
@@ -543,9 +612,7 @@ export default function AdminNewsPage() {
         ====================================== */}
 
         {error && (
-
           <div className="mb-6 flex items-center justify-between rounded-xl border border-[var(--error)] bg-[var(--surface-container-low)] px-4 py-3 text-[var(--error)]">
-
             <span>{error}</span>
 
             <button
@@ -554,9 +621,7 @@ export default function AdminNewsPage() {
             >
               <X size={18} />
             </button>
-
           </div>
-
         )}
 
         {/* ======================================
@@ -564,7 +629,6 @@ export default function AdminNewsPage() {
         ====================================== */}
 
         <div className="mb-6 rounded-2xl bg-[var(--surface-container-lowest)] p-4 shadow-sm">
-
           <div className="relative">
 
             <Search
@@ -574,13 +638,14 @@ export default function AdminNewsPage() {
 
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search news by title, content or category..."
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="Search news by title, content, category or slug..."
               className="w-full rounded-xl border border-[var(--outline-variant)] bg-[var(--surface)] py-3 pl-12 pr-4 outline-none focus:border-[var(--primary)]"
             />
 
           </div>
-
         </div>
 
         {/* ======================================
@@ -596,28 +661,21 @@ export default function AdminNewsPage() {
             </h2>
 
             <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
-
-              Showing {filteredNews.length} of {totalItems} articles
-
+              Showing {filteredNews.length} of{" "}
+              {totalItems} articles
             </p>
 
           </div>
 
           {loading ? (
-
             <div className="flex items-center justify-center gap-3 py-20">
-
               <Loader2
                 size={24}
                 className="animate-spin"
               />
-
               Loading news...
-
             </div>
-
           ) : filteredNews.length === 0 ? (
-
             <div className="py-20 text-center">
 
               <Newspaper
@@ -628,15 +686,12 @@ export default function AdminNewsPage() {
               <p>No news found</p>
 
             </div>
-
           ) : (
-
             <div className="overflow-x-auto">
 
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[1100px]">
 
                 <thead>
-
                   <tr className="bg-[var(--surface-container-low)] text-left text-sm">
 
                     <th className="px-6 py-4">
@@ -645,6 +700,10 @@ export default function AdminNewsPage() {
 
                     <th className="px-6 py-4">
                       News
+                    </th>
+
+                    <th className="px-6 py-4">
+                      URL Slug
                     </th>
 
                     <th className="px-6 py-4">
@@ -660,60 +719,50 @@ export default function AdminNewsPage() {
                     </th>
 
                   </tr>
-
                 </thead>
 
                 <tbody>
 
                   {filteredNews.map((item) => (
-
                     <tr
                       key={item.id}
                       className="border-t border-[var(--surface-container)] transition hover:bg-[var(--surface-container-low)]"
                     >
 
-                      <td className="px-6 py-5">
+                      {/* ID */}
 
+                      <td className="px-6 py-5">
                         <span className="font-medium">
                           #{item.id}
                         </span>
-
                       </td>
+
+                      {/* NEWS */}
 
                       <td className="max-w-md px-6 py-5">
 
                         <div className="flex items-center gap-3">
 
                           {item.image ? (
-
                             <img
                               src={item.image}
                               alt={item.title}
                               className="h-14 w-20 shrink-0 rounded-lg object-cover"
                             />
-
                           ) : (
-
                             <div className="flex h-14 w-20 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-container)]">
-
                               <ImageIcon size={20} />
-
                             </div>
-
                           )}
 
                           <div className="min-w-0">
 
                             <h3 className="truncate font-semibold">
-
                               {item.title}
-
                             </h3>
 
                             <p className="mt-1 line-clamp-1 text-sm text-[var(--on-surface-variant)]">
-
                               {item.content}
-
                             </p>
 
                           </div>
@@ -721,6 +770,30 @@ export default function AdminNewsPage() {
                         </div>
 
                       </td>
+
+                      {/* SLUG */}
+
+                      <td className="max-w-xs px-6 py-5">
+
+                        <div className="flex items-center gap-2">
+
+                          <LinkIcon
+                            size={16}
+                            className="shrink-0 text-[var(--primary)]"
+                          />
+
+                          <span
+                            className="truncate text-sm text-[var(--on-surface-variant)]"
+                            title={item.slug}
+                          >
+                            /news/{item.slug}
+                          </span>
+
+                        </div>
+
+                      </td>
+
+                      {/* CATEGORY */}
 
                       <td className="px-6 py-5">
 
@@ -737,6 +810,8 @@ export default function AdminNewsPage() {
 
                       </td>
 
+                      {/* DATE */}
+
                       <td className="px-6 py-5">
 
                         <div className="flex items-center gap-2 text-sm">
@@ -749,6 +824,8 @@ export default function AdminNewsPage() {
 
                       </td>
 
+                      {/* ACTIONS */}
+
                       <td className="px-6 py-5">
 
                         <div className="flex justify-end gap-2">
@@ -759,30 +836,28 @@ export default function AdminNewsPage() {
                             className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-container)] transition hover:opacity-80"
                             title="Edit"
                           >
-
                             <Pencil size={17} />
-
                           </button>
 
                           <button
                             type="button"
-                            onClick={() => handleDelete(item.id)}
-                            disabled={deletingId === item.id}
+                            onClick={() =>
+                              handleDelete(item.id)
+                            }
+                            disabled={
+                              deletingId === item.id
+                            }
                             className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--error)] text-white transition hover:opacity-90 disabled:opacity-50"
                             title="Delete"
                           >
 
                             {deletingId === item.id ? (
-
                               <Loader2
                                 size={17}
                                 className="animate-spin"
                               />
-
                             ) : (
-
                               <Trash2 size={17} />
-
                             )}
 
                           </button>
@@ -792,7 +867,6 @@ export default function AdminNewsPage() {
                       </td>
 
                     </tr>
-
                   ))}
 
                 </tbody>
@@ -800,7 +874,6 @@ export default function AdminNewsPage() {
               </table>
 
             </div>
-
           )}
 
           {/* ======================================
@@ -808,7 +881,6 @@ export default function AdminNewsPage() {
           ====================================== */}
 
           {!loading && totalItems > 0 && (
-
             <div className="flex flex-col gap-4 border-t border-[var(--surface-container)] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
 
               <p className="text-sm text-[var(--on-surface-variant)]">
@@ -834,14 +906,13 @@ export default function AdminNewsPage() {
                 <button
                   type="button"
                   onClick={handlePreviousPage}
-                  disabled={currentPage === 1 || loading}
+                  disabled={
+                    currentPage === 1 || loading
+                  }
                   className="flex items-center gap-2 rounded-xl bg-[var(--surface-container)] px-4 py-2.5 text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-
                   <ChevronLeft size={18} />
-
                   Previous
-
                 </button>
 
                 {/* NEXT */}
@@ -849,38 +920,38 @@ export default function AdminNewsPage() {
                 <button
                   type="button"
                   onClick={handleNextPage}
-                  disabled={currentPage === totalPages || loading}
+                  disabled={
+                    currentPage === totalPages ||
+                    loading
+                  }
                   className="flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-
                   Next
-
                   <ChevronRight size={18} />
-
                 </button>
 
               </div>
 
             </div>
-
           )}
 
         </div>
 
       </div>
 
-      {/* ======================================
+      {/* ==========================================
           CREATE MODAL
-      ====================================== */}
+      ========================================== */}
 
       {showCreate && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
           <form
             onSubmit={handleCreate}
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[var(--surface-container-lowest)] p-6"
           >
+
+            {/* HEADER */}
 
             <div className="mb-6 flex items-center justify-between">
 
@@ -890,7 +961,9 @@ export default function AdminNewsPage() {
 
               <button
                 type="button"
-                onClick={() => setShowCreate(false)}
+                onClick={() =>
+                  setShowCreate(false)
+                }
               >
                 <X />
               </button>
@@ -907,10 +980,48 @@ export default function AdminNewsPage() {
 
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) =>
+                  setTitle(e.target.value)
+                }
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3 outline-none focus:border-[var(--primary)]"
                 placeholder="News title"
               />
+
+            </div>
+
+            {/* SLUG */}
+
+            <div className="mb-4">
+
+              <label className="mb-2 flex items-center gap-2 font-medium">
+                <LinkIcon size={16} />
+                URL Slug
+              </label>
+
+              <input
+                value={slug}
+                onChange={(e) =>
+                  setSlug(e.target.value)
+                }
+                className="w-full rounded-xl border border-[var(--outline-variant)] p-3 outline-none focus:border-[var(--primary)]"
+                placeholder="lionel-messi-retires-from-international-football"
+              />
+
+              <p className="mt-2 text-xs text-[var(--on-surface-variant)]">
+                Enter the English slug manually.
+                Use lowercase English letters,
+                numbers and hyphens.
+              </p>
+
+              {slug.trim() && (
+                <div className="mt-2 rounded-lg bg-[var(--surface-container-low)] p-2 text-xs text-[var(--on-surface-variant)]">
+                  URL: /news/
+                  {slug
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}
+                </div>
+              )}
 
             </div>
 
@@ -924,7 +1035,9 @@ export default function AdminNewsPage() {
 
               <select
                 value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
+                onChange={(e) =>
+                  setCategoryId(e.target.value)
+                }
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3"
               >
 
@@ -933,16 +1046,12 @@ export default function AdminNewsPage() {
                 </option>
 
                 {categories.map((category) => (
-
                   <option
                     key={category.id}
                     value={category.id}
                   >
-
                     {category.name}
-
                   </option>
-
                 ))}
 
               </select>
@@ -959,7 +1068,9 @@ export default function AdminNewsPage() {
 
               <textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) =>
+                  setContent(e.target.value)
+                }
                 rows={6}
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3 outline-none focus:border-[var(--primary)]"
                 placeholder="Write your news content..."
@@ -979,7 +1090,9 @@ export default function AdminNewsPage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) =>
-                  setImage(e.target.files?.[0] || null)
+                  setImage(
+                    e.target.files?.[0] || null
+                  )
                 }
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3"
               />
@@ -996,7 +1109,9 @@ export default function AdminNewsPage() {
 
               <input
                 value={pullQuote}
-                onChange={(e) => setPullQuote(e.target.value)}
+                onChange={(e) =>
+                  setPullQuote(e.target.value)
+                }
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3"
               />
 
@@ -1012,7 +1127,9 @@ export default function AdminNewsPage() {
 
               <input
                 value={heroImageSrc}
-                onChange={(e) => setHeroImageSrc(e.target.value)}
+                onChange={(e) =>
+                  setHeroImageSrc(e.target.value)
+                }
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3"
                 placeholder="https://example.com/image.jpg"
               />
@@ -1025,7 +1142,9 @@ export default function AdminNewsPage() {
 
               <button
                 type="button"
-                onClick={() => setShowCreate(false)}
+                onClick={() =>
+                  setShowCreate(false)
+                }
                 disabled={saving}
                 className="rounded-xl bg-[var(--surface-container)] px-5 py-3 disabled:opacity-50"
               >
@@ -1056,21 +1175,21 @@ export default function AdminNewsPage() {
           </form>
 
         </div>
-
       )}
 
-      {/* ======================================
+      {/* ==========================================
           EDIT MODAL
-      ====================================== */}
+      ========================================== */}
 
       {showEdit && editingNews && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
           <form
             onSubmit={handleUpdate}
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[var(--surface-container-lowest)] p-6"
           >
+
+            {/* HEADER */}
 
             <div className="mb-6 flex items-center justify-between">
 
@@ -1105,6 +1224,27 @@ export default function AdminNewsPage() {
                 }
                 className="w-full rounded-xl border border-[var(--outline-variant)] p-3"
               />
+
+            </div>
+
+            {/* CURRENT SLUG */}
+
+            <div className="mb-4">
+
+              <label className="mb-2 flex items-center gap-2 font-medium">
+                <LinkIcon size={16} />
+                Current URL Slug
+              </label>
+
+              <div className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container)] p-3 text-sm">
+                /news/{editingNews.slug}
+              </div>
+
+              <p className="mt-2 text-xs text-[var(--on-surface-variant)]">
+                The slug is kept unchanged when
+                editing the title so the existing
+                article URL remains stable.
+              </p>
 
             </div>
 
@@ -1203,12 +1343,10 @@ export default function AdminNewsPage() {
               >
 
                 {saving && (
-
                   <Loader2
                     size={18}
                     className="animate-spin"
                   />
-
                 )}
 
                 {saving
@@ -1222,7 +1360,6 @@ export default function AdminNewsPage() {
           </form>
 
         </div>
-
       )}
 
     </div>

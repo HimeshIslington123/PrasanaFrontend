@@ -57,7 +57,7 @@ export default function Footer() {
           <div className="flex flex-col items-start">
             <Link href="/" aria-label="प्रश्न गृहपृष्ठ">
               <Image
-                src="/logo.png"
+                src="/logo1.png"
                 alt="प्रश्न"
                 width={105}
                 height={60}
