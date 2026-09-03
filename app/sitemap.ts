@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 const baseUrl = "https://www.prashnaa.com";
 
-const API_URL = process.env.API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 type News = {
   id: number;
@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const response = await fetch(`${API_URL}/News`, {
+    const response = await fetch(`${API_URL}/news`, {
       next: {
         revalidate: 3600,
       },
