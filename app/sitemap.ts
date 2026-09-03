@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const baseUrl = "https://www.prashnaa.com";
+const baseUrl = "https://prasananews.vercel.app";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
