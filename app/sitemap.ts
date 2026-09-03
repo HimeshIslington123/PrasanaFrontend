@@ -38,43 +38,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!API_URL) {
     return staticPages;
   }
-
-  try {
-    const response = await fetch(`${API_URL}/news`, {
+try {
+  const response = await fetch(
+    "https://learningcl-cd-4.onrender.com/news",
+    {
       next: {
         revalidate: 3600,
       },
-    });
-
-    if (!response.ok) {
-      return staticPages;
     }
+  );
 
-    const news: News[] = await response.json();
-
-    // ============================================================
-    // DYNAMIC NEWS URLs
-    // ============================================================
-
-    const newsPages: MetadataRoute.Sitemap = news
-      .filter((item) => item.slug)
-      .map((item) => ({
-        url: `${baseUrl}/news/${item.slug}`,
-        lastModified: new Date(item.created),
-        changeFrequency: "daily" as const,
-        priority: 0.8,
-      }));
-
-    return [
-      ...staticPages,
-      ...newsPages,
-    ];
-  } catch (error) {
-    console.error(
-      "Failed to generate sitemap:",
-      error
-    );
-
+  if (!response.ok) {
+    console.error("News API failed:", response.status);
     return staticPages;
   }
-}
+
+  const news: News[] = await response.json();
+
+  const newsPages: MetadataRoute.Sitemap = news
+    .filter((item) => item.slug)
+    .map((item) => ({
+      url: `${baseUrl}/news/${item.slug}`,
+      lastModified: new Date(item.created),
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    }));
+
+  return [
+    ...staticPages,
+    ...newsPages,
+  ];
+} catch (error) {
+  console.error("Failed to generate sitemap:", error);
+  return staticPages;
+}}
