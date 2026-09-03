@@ -2,8 +2,6 @@ import type { MetadataRoute } from "next";
 
 const baseUrl = "https://prasananews.vercel.app";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 type News = {
   id: number;
   slug: string;
@@ -11,10 +9,6 @@ type News = {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // ============================================================
-  // STATIC PAGES
-  // ============================================================
-
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -22,7 +16,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 1,
     },
-
     {
       url: `${baseUrl}/aboutus`,
       lastModified: new Date(),
@@ -31,44 +24,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // ============================================================
-  // GET ALL NEWS
-  // ============================================================
+  try {
+    const response = await fetch(
+      "https://learningcl-cd-4.onrender.com/news",
+      {
+        next: {
+          revalidate: 3600,
+        },
+      }
+    );
 
-  if (!API_URL) {
-    return staticPages;
-  }
-try {
-  const response = await fetch(
-    "https://learningcl-cd-4.onrender.com/news",
-    {
-      next: {
-        revalidate: 3600,
-      },
+    if (!response.ok) {
+      console.error(
+        "Sitemap API failed:",
+        response.status
+      );
+
+      return staticPages;
     }
-  );
 
-  if (!response.ok) {
-    console.error("News API failed:", response.status);
+    const result = await response.json();
+
+    // Your API returns { data: [...] }
+    const news: News[] = result.data ?? [];
+
+    const newsPages: MetadataRoute.Sitemap = news
+      .filter((item) => item.slug)
+      .map((item) => ({
+        url: `${baseUrl}/news/${item.slug}`,
+        lastModified: new Date(item.created),
+        changeFrequency: "daily" as const,
+        priority: 0.8,
+      }));
+
+    return [
+      ...staticPages,
+      ...newsPages,
+    ];
+  } catch (error) {
+    console.error(
+      "Failed to generate sitemap:",
+      error
+    );
+
     return staticPages;
   }
-
-  const news: News[] = await response.json();
-
-  const newsPages: MetadataRoute.Sitemap = news
-    .filter((item) => item.slug)
-    .map((item) => ({
-      url: `${baseUrl}/news/${item.slug}`,
-      lastModified: new Date(item.created),
-      changeFrequency: "daily" as const,
-      priority: 0.8,
-    }));
-
-  return [
-    ...staticPages,
-    ...newsPages,
-  ];
-} catch (error) {
-  console.error("Failed to generate sitemap:", error);
-  return staticPages;
-}}
+}
