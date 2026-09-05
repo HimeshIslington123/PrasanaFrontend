@@ -40,6 +40,9 @@ const categories = [
   { name: "व्यापार", href: "/category/business" },
 
   { name: "खेलकुद", href: "/category/sports" },
+
+   { name: "साहित्य", href: "/category/literature" },
+  
 ];
 
 // ============================================================

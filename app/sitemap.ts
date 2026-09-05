@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const baseUrl = "https://prasananews.vercel.app";
+const baseUrl = "https://www.prashnaa.com";
 
 type News = {
   id: number;
