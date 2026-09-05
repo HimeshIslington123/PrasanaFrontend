@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
@@ -23,20 +24,20 @@ export const metadata: Metadata = {
 
   title: {
     default:
-     "Nepal News | Nepali News | Breaking News Nepal | Latest Nepal News | Prashnaa",
-
-    template: "%s | प्रश्ना न्यूज",
+      "Nepal News | Nepali News | Breaking News Nepal | Latest Nepal News | Prashna",
+    template: "%s | प्रश्न न्यूज",
   },
 
   icons: {
     icon: "/favicon.ico",
   },
+
   // ==========================================================
   // DESCRIPTION
   // ==========================================================
 
   description:
-    "प्रश्ना न्यूज नेपालको डिजिटल समाचार पोर्टल हो। नेपाल तथा विश्वभरका ताजा र महत्वपूर्ण समाचार, राजनीति, समाज, अर्थतन्त्र, व्यापार, प्रविधि, खेलकुद, मनोरञ्जन, शिक्षा र समसामयिक खबरहरू पढ्नुहोस्।",
+    "प्रश्न न्यूज नेपालको डिजिटल समाचार पोर्टल हो। नेपाल तथा विश्वभरका ताजा र महत्वपूर्ण समाचार, राजनीति, समाज, अर्थतन्त्र, व्यापार, प्रविधि, खेलकुद, मनोरञ्जन, शिक्षा र समसामयिक खबरहरू पढ्नुहोस्।",
 
   // ==========================================================
   // KEYWORDS
@@ -44,21 +45,21 @@ export const metadata: Metadata = {
 
   keywords: [
     // Brand - Nepali
-    "प्रश्ना न्यूज",
-    "प्रश्ना न्युज",
-    "प्रश्ना समाचार",
-    "प्रश्ना न्यूज नेपाल",
-    "प्रश्ना नेपाल",
-    "प्रश्ना खबर",
-    "प्रश्ना ताजा समाचार",
+    "प्रश्न न्यूज",
+    "प्रश्न न्युज",
+    "प्रश्न समाचार",
+    "प्रश्न न्यूज नेपाल",
+    "प्रश्न नेपाल",
+    "प्रश्न खबर",
+    "प्रश्न ताजा समाचार",
 
     // Brand - English
-    "Prashnaa News",
-    "Prashnaa News Nepal",
-    "Prashnaa Nepal",
-    "Prashnaa News Portal",
-    "Prashnaa News Online",
-    "Prashnaa",
+    "Prashna News",
+    "Prashna News Nepal",
+    "Prashna Nepal",
+    "Prashna News Portal",
+    "Prashna News Online",
+    "Prashna",
 
     // General Nepali News
     "नेपाली समाचार",
@@ -226,31 +227,22 @@ export const metadata: Metadata = {
 
   authors: [
     {
-      name: "प्रश्ना न्यूज",
+      name: "प्रश्न न्यूज",
       url: "https://www.prashnaa.com/",
     },
   ],
 
-  creator: "प्रश्ना न्यूज",
+  creator: "प्रश्न न्यूज",
 
-  publisher: "प्रश्ना न्यूज",
+  publisher: "प्रश्न न्यूज",
 
   // ==========================================================
   // PRODUCTION WEBSITE
   // ==========================================================
 
-  metadataBase: new URL(
-    "https://www.prashnaa.com"
-  ),
+  metadataBase: new URL("https://www.prashnaa.com"),
 
-  // ==========================================================
-  // GOOGLE SEARCH CONSOLE
-  // ==========================================================
 
-  verification: {
-    google:
-      "JY08RkncfVwO8VI9uFp00GROZnFRmrmu2lmnNXao9eA",
-  },
 
   // ==========================================================
   // CANONICAL
@@ -269,13 +261,13 @@ export const metadata: Metadata = {
 
     locale: "ne_NP",
 
-    siteName: "प्रश्ना न्यूज",
+    siteName: "प्रश्न न्यूज",
 
     title:
-      "प्रश्ना न्यूज | नेपालको ताजा र विश्वसनीय समाचार",
+      "प्रश्न न्यूज | नेपालको ताजा र विश्वसनीय समाचार",
 
     description:
-      "नेपाल तथा विश्वभरका ताजा समाचार, राजनीति, समाज, अर्थतन्त्र, व्यापार, प्रविधि, खेलकुद, मनोरञ्जन, शिक्षा र समसामयिक खबरहरू प्रश्ना न्यूजमा पढ्नुहोस्।",
+      "नेपाल तथा विश्वभरका ताजा समाचार, राजनीति, समाज, अर्थतन्त्र, व्यापार, प्रविधि, खेलकुद, मनोरञ्जन, शिक्षा र समसामयिक खबरहरू प्रश्न न्यूजमा पढ्नुहोस्।",
 
     url: "/",
 
@@ -287,8 +279,7 @@ export const metadata: Metadata = {
 
         height: 630,
 
-        alt:
-          "प्रश्ना न्यूज - नेपालको ताजा समाचार",
+        alt: "प्रश्न न्यूज - नेपालको ताजा समाचार",
       },
     ],
   },
@@ -301,7 +292,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
 
     title:
-      "प्रश्ना न्यूज | नेपालको ताजा र विश्वसनीय समाचार",
+      "प्रश्न न्यूज | नेपालको ताजा र विश्वसनीय समाचार",
 
     description:
       "नेपाल तथा विश्वभरका ताजा समाचार, राजनीति, समाज, अर्थतन्त्र, प्रविधि, खेलकुद र मनोरञ्जनका खबरहरू।",
@@ -320,13 +311,9 @@ export const metadata: Metadata = {
 
     googleBot: {
       index: true,
-
       follow: true,
-
       "max-image-preview": "large",
-
       "max-snippet": -1,
-
       "max-video-preview": -1,
     },
   },
