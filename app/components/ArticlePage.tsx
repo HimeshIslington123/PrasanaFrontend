@@ -4,8 +4,13 @@ import Image from "next/image";
 import {
   Bookmark,
   ChevronRight,
+  Eye,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -23,16 +28,21 @@ type ArticleComment = {
 
 type ArticlePageProps = {
   id: number;
+
   title: string;
 
   category?: string;
 
   authorName?: string;
+
   authorRole?: string;
+
   publishedAt?: string;
+
   authorImageSrc?: string;
 
   heroImageSrc?: string;
+
   heroImageAlt?: string;
 
   caption?: string | null;
@@ -42,6 +52,10 @@ type ArticlePageProps = {
   pullQuote?: string | null;
 
   comments?: ArticleComment[];
+
+  initialViewCount?: number;
+
+  initialShareCount?: number;
 };
 
 // ============================================================
@@ -50,183 +64,582 @@ type ArticlePageProps = {
 
 export default function ArticlePage({
   id,
+
   title,
 
   category = "प्रविधि",
 
   authorName = "प्रश्न समाचार ब्युरो",
+
   authorRole = "",
+
   publishedAt = "",
+
   authorImageSrc = "",
 
   heroImageSrc,
+
   heroImageAlt = "",
 
   caption = null,
 
   paragraphs = [],
+
   pullQuote = null,
 
   comments: initialComments = [],
+
+  initialViewCount = 0,
+
+  initialShareCount = 0,
 }: ArticlePageProps) {
+  // ==========================================================
+  // STATES
+  // ==========================================================
+
   const [isBookmarked, setIsBookmarked] =
     useState(false);
 
-  const [comment, setComment] = useState("");
+  const [comment, setComment] =
+    useState("");
 
   const [comments, setComments] =
-    useState<ArticleComment[]>(initialComments);
+    useState<ArticleComment[]>(
+      initialComments
+    );
 
-  const router = useRouter();
+  const [viewCount, setViewCount] =
+    useState(initialViewCount);
 
-  // ============================================================
-  // ARTICLE URL
-  // ============================================================
+  const [shareCount, setShareCount] =
+    useState(initialShareCount);
 
   const [articleUrl, setArticleUrl] =
     useState("");
 
+  // ==========================================================
+  // REFS
+  // ==========================================================
+
+  /*
+   * Prevent duplicate view-count requests
+   * during React Strict Mode development.
+   */
+  const viewCountAdded =
+    useRef(false);
+
+  /*
+   * Prevent multiple share-count requests
+   * from very fast clicks.
+   */
+  const shareCountAdding =
+    useRef(false);
+
+  // ==========================================================
+  // ROUTER
+  // ==========================================================
+
+  const router = useRouter();
+
+  // ==========================================================
+  // API BASE
+  // ==========================================================
+
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL;
+
+  // ==========================================================
+  // ARTICLE URL
+  // ==========================================================
+
   useEffect(() => {
-    setArticleUrl(window.location.href);
+    /*
+     * window is only available in the browser.
+     */
+    setArticleUrl(
+      window.location.href
+    );
   }, []);
 
-  // ============================================================
-  // UPDATE COMMENTS IF SERVER DATA CHANGES
-  // ============================================================
+  // ==========================================================
+  // UPDATE COMMENTS
+  // ==========================================================
 
   useEffect(() => {
     setComments(initialComments);
   }, [initialComments]);
 
-  // ============================================================
-  // ADD COMMENT
-  // ============================================================
+  // ==========================================================
+  // ADD VIEW COUNT
+  // ==========================================================
 
-  const handleComment = async () => {
-    if (!comment.trim()) {
+  useEffect(() => {
+    if (!API_BASE) {
+      console.error(
+        "NEXT_PUBLIC_API_URL is not configured"
+      );
+
       return;
     }
 
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/Comment`,
-        {
-          Content: comment.trim(),
-          NewsId: id,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-
-      setComments((prevComments) => [
-        ...prevComments,
-        response.data,
-      ]);
-
-      setComment("");
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        router.push("/Login");
-        return;
-      }
-
-      console.error(
-        "Failed to add comment:",
-        error
-      );
+    /*
+     * React Strict Mode may run this effect twice
+     * in development.
+     *
+     * This prevents duplicate requests during
+     * the same component mount.
+     */
+    if (viewCountAdded.current) {
+      return;
     }
-  };
 
-  // ============================================================
-  // BOOKMARK
-  // ============================================================
+    viewCountAdded.current = true;
 
-  const handleBookmark = async () => {
-    try {
-      if (!isBookmarked) {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/bookmark`,
-          id,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-            withCredentials: true,
-          }
-        );
-
-        setIsBookmarked(true);
-      } else {
-        await axios.delete(
-          `${process.env.NEXT_PUBLIC_API_URL}/bookmark`,
-          {
-            data: id,
-            headers: {
-              "Content-Type": "application/json",
-            },
-            withCredentials: true,
-          }
-        );
-
-        setIsBookmarked(false);
-      }
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        router.push("/login");
-        return;
-      }
-
-      console.error(
-        "Bookmark error:",
-        error
-      );
-    }
-  };
-
-  // ============================================================
-  // CHECK BOOKMARK
-  // ============================================================
-
-  useEffect(() => {
-    const checkBookmark = async () => {
+    const addView = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/bookmark/${id}`,
-          {
-            withCredentials: true,
-          }
-        );
-
-        setIsBookmarked(
-          Boolean(response.data)
-        );
-      } catch (error: any) {
-        // Don't redirect if the user isn't logged in.
-        if (error.response?.status !== 401) {
-          console.error(
-            "Failed to check bookmark:",
-            error
+        const response =
+          await axios.post(
+            `${API_BASE}/News/AddViewCount/${id}`
           );
+
+        /*
+         * Case 1:
+         *
+         * Backend returns:
+         *
+         * 71
+         */
+        if (
+          typeof response.data ===
+          "number"
+        ) {
+          setViewCount(
+            response.data
+          );
+
+          return;
         }
+
+        /*
+         * Case 2:
+         *
+         * Backend returns:
+         *
+         * {
+         *   viewCount: 71
+         * }
+         */
+        if (
+          response.data?.viewCount !==
+          undefined
+        ) {
+          setViewCount(
+            Number(
+              response.data.viewCount
+            )
+          );
+
+          return;
+        }
+
+        /*
+         * Case 3:
+         *
+         * Backend doesn't return
+         * updated count.
+         */
+        setViewCount(
+          (previous) =>
+            previous + 1
+        );
+      } catch (error) {
+        console.error(
+          "Failed to add view count:",
+          error
+        );
       }
     };
 
-    checkBookmark();
-  }, [id]);
+    addView();
+  }, [id, API_BASE]);
 
-  // ============================================================
+  // ==========================================================
+  // ADD SHARE COUNT
+  // ==========================================================
+
+  const handleShareCount =
+    async () => {
+      if (!API_BASE) {
+        console.error(
+          "NEXT_PUBLIC_API_URL is not configured"
+        );
+
+        return;
+      }
+
+      /*
+       * Prevent duplicate requests
+       * from very fast clicks.
+       */
+      if (
+        shareCountAdding.current
+      ) {
+        return;
+      }
+
+      shareCountAdding.current =
+        true;
+
+      try {
+        const response =
+          await axios.post(
+            `${API_BASE}/News/AddShareCount/${id}`
+          );
+
+        /*
+         * Case 1:
+         *
+         * Backend returns:
+         *
+         * 10
+         */
+        if (
+          typeof response.data ===
+          "number"
+        ) {
+          setShareCount(
+            response.data
+          );
+
+          return;
+        }
+
+        /*
+         * Case 2:
+         *
+         * Backend returns:
+         *
+         * {
+         *   shareCount: 10
+         * }
+         */
+        if (
+          response.data?.shareCount !==
+          undefined
+        ) {
+          setShareCount(
+            Number(
+              response.data.shareCount
+            )
+          );
+
+          return;
+        }
+
+        /*
+         * Case 3:
+         *
+         * Backend doesn't return
+         * updated count.
+         */
+        setShareCount(
+          (previous) =>
+            previous + 1
+        );
+      } catch (error) {
+        console.error(
+          "Failed to add share count:",
+          error
+        );
+      } finally {
+        shareCountAdding.current =
+          false;
+      }
+    };
+
+  // ==========================================================
+  // FORMAT PUBLISHED DATE
+  // ==========================================================
+
+  /*
+   * IMPORTANT:
+   *
+   * Do NOT use "ne-NP" here.
+   *
+   * Browser and server can produce different
+   * localized output with different environments.
+   *
+   * We use "en-US" explicitly so the output
+   * is deterministic on both server and client.
+   *
+   * The timezone is fixed to Nepal.
+   *
+   * Example:
+   *
+   * API:
+   * 2026-09-05T04:53:41.384731Z
+   *
+   * Output:
+   * September 5, 2026 at 10:38 AM
+   */
+  const formatPublishedDate = (
+    dateString: string
+  ) => {
+    if (!dateString) {
+      return "";
+    }
+
+    const date =
+      new Date(dateString);
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return dateString;
+    }
+
+    const parts =
+      new Intl.DateTimeFormat(
+        "en-US",
+        {
+          timeZone:
+            "Asia/Kathmandu",
+
+          year: "numeric",
+
+          month: "long",
+
+          day: "numeric",
+
+          hour: "numeric",
+
+          minute: "2-digit",
+
+          hour12: true,
+        }
+      ).formatToParts(date);
+
+    const getPart = (
+      type: Intl.DateTimeFormatPartTypes
+    ) => {
+      return (
+        parts.find(
+          (part) =>
+            part.type === type
+        )?.value ?? ""
+      );
+    };
+
+    const month =
+      getPart("month");
+
+    const day =
+      getPart("day");
+
+    const year =
+      getPart("year");
+
+    const hour =
+      getPart("hour");
+
+    const minute =
+      getPart("minute");
+
+    const dayPeriod =
+      getPart("dayPeriod");
+
+    return `${month} ${day}, ${year} at ${hour}:${minute} ${dayPeriod}`;
+  };
+
+  // ==========================================================
+  // ADD COMMENT
+  // ==========================================================
+
+  const handleComment =
+    async () => {
+      if (!comment.trim()) {
+        return;
+      }
+
+      if (!API_BASE) {
+        console.error(
+          "NEXT_PUBLIC_API_URL is not configured"
+        );
+
+        return;
+      }
+
+      try {
+        const response =
+          await axios.post(
+            `${API_BASE}/api/Comment`,
+            {
+              Content:
+                comment.trim(),
+
+              NewsId: id,
+            },
+            {
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              withCredentials: true,
+            }
+          );
+
+        setComments(
+          (previousComments) => [
+            ...previousComments,
+            response.data,
+          ]
+        );
+
+        setComment("");
+      } catch (error: any) {
+        if (
+          error.response?.status ===
+          401
+        ) {
+          router.push("/Login");
+
+          return;
+        }
+
+        console.error(
+          "Failed to add comment:",
+          error
+        );
+      }
+    };
+
+  // ==========================================================
+  // BOOKMARK
+  // ==========================================================
+
+  const handleBookmark =
+    async () => {
+      if (!API_BASE) {
+        console.error(
+          "NEXT_PUBLIC_API_URL is not configured"
+        );
+
+        return;
+      }
+
+      try {
+        /*
+         * ADD BOOKMARK
+         */
+        if (!isBookmarked) {
+          await axios.post(
+            `${API_BASE}/bookmark`,
+            id,
+            {
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              withCredentials: true,
+            }
+          );
+
+          setIsBookmarked(true);
+        }
+
+        /*
+         * REMOVE BOOKMARK
+         */
+        else {
+          await axios.delete(
+            `${API_BASE}/bookmark`,
+            {
+              data: id,
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              withCredentials: true,
+            }
+          );
+
+          setIsBookmarked(false);
+        }
+      } catch (error: any) {
+        if (
+          error.response?.status ===
+          401
+        ) {
+          router.push("/login");
+
+          return;
+        }
+
+        console.error(
+          "Bookmark error:",
+          error
+        );
+      }
+    };
+
+  // ==========================================================
+  // CHECK BOOKMARK
+  // ==========================================================
+
+  useEffect(() => {
+    if (!API_BASE) {
+      return;
+    }
+
+    const checkBookmark =
+      async () => {
+        try {
+          const response =
+            await axios.get(
+              `${API_BASE}/bookmark/${id}`,
+              {
+                withCredentials: true,
+              }
+            );
+
+          setIsBookmarked(
+            Boolean(response.data)
+          );
+        } catch (error: any) {
+          /*
+           * 401 simply means the user
+           * isn't logged in.
+           */
+          if (
+            error.response?.status !==
+            401
+          ) {
+            console.error(
+              "Failed to check bookmark:",
+              error
+            );
+          }
+        }
+      };
+
+    checkBookmark();
+  }, [id, API_BASE]);
+
+  // ==========================================================
   // UI
-  // ============================================================
+  // ==========================================================
 
   return (
     <main className="min-h-screen bg-[var(--background)]">
 
       {/* ======================================================
-          MAIN PAGE CONTAINER
+          MAIN CONTAINER
       ======================================================= */}
 
       <div
@@ -255,7 +668,7 @@ export default function ArticlePage({
         >
 
           {/* ==================================================
-              LEFT SIDE - ARTICLE
+              ARTICLE
           =================================================== */}
 
           <article
@@ -308,20 +721,25 @@ export default function ArticlePage({
                 "
               />
 
-              <span className="text-[var(--on-surface)]">
+              <span
+                className="
+                  text-[var(--on-surface)]
+                "
+              >
                 {category}
               </span>
 
             </nav>
 
             {/* ==================================================
-                ARTICLE HEADER
+                HEADER
             =================================================== */}
 
             <header className="max-w-[900px]">
 
               {category && (
                 <div className="mb-3">
+
                   <span
                     className="
                       font-[family-name:var(--font-devanagari)]
@@ -334,6 +752,7 @@ export default function ArticlePage({
                   >
                     {category}
                   </span>
+
                 </div>
               )}
 
@@ -358,7 +777,7 @@ export default function ArticlePage({
             </header>
 
             {/* ==================================================
-                BYLINE
+                BYLINE + COUNTERS
             =================================================== */}
 
             <div
@@ -378,7 +797,14 @@ export default function ArticlePage({
                   AUTHOR
               =================================================== */}
 
-              <div className="flex min-w-0 items-center gap-3">
+              <div
+                className="
+                  flex
+                  min-w-0
+                  items-center
+                  gap-3
+                "
+              >
 
                 {authorImageSrc ? (
                   <div
@@ -391,9 +817,14 @@ export default function ArticlePage({
                       rounded-full
                     "
                   >
+
                     <Image
-                      src={authorImageSrc}
-                      alt={authorName}
+                      src={
+                        authorImageSrc
+                      }
+                      alt={
+                        authorName
+                      }
                       fill
                       sizes="40px"
                       className="
@@ -401,6 +832,7 @@ export default function ArticlePage({
                         object-top
                       "
                     />
+
                   </div>
                 ) : (
                   <div
@@ -420,11 +852,20 @@ export default function ArticlePage({
                       text-[var(--primary)]
                     "
                   >
-                    {authorName?.charAt(0)}
+                    {authorName?.charAt(
+                      0
+                    )}
                   </div>
                 )}
 
-                <div className="min-w-0 leading-tight">
+                <div
+                  className="
+                    min-w-0
+                    leading-tight
+                  "
+                >
+
+                  {/* AUTHOR NAME */}
 
                   <p
                     className="
@@ -437,6 +878,8 @@ export default function ArticlePage({
                   >
                     {authorName}
                   </p>
+
+                  {/* AUTHOR ROLE */}
 
                   {authorRole && (
                     <p
@@ -451,6 +894,8 @@ export default function ArticlePage({
                     </p>
                   )}
 
+                  {/* PUBLISHED DATE */}
+
                   {publishedAt && (
                     <p
                       className="
@@ -460,7 +905,9 @@ export default function ArticlePage({
                         text-[var(--secondary)]
                       "
                     >
-                      {publishedAt}
+                      {formatPublishedDate(
+                        publishedAt
+                      )}
                     </p>
                   )}
 
@@ -469,7 +916,7 @@ export default function ArticlePage({
               </div>
 
               {/* ==================================================
-                  SHARE + BOOKMARK
+                  VIEWS + SHARE + BOOKMARK
               =================================================== */}
 
               <div
@@ -481,22 +928,64 @@ export default function ArticlePage({
                 "
               >
 
-                {/* SHARE */}
+                {/* ==================================================
+                    VIEW COUNT
+                =================================================== */}
+
+                <div
+                  className="
+                    flex
+                    h-9
+                    items-center
+                    gap-1.5
+                    px-2
+                    font-[family-name:var(--font-devanagari)]
+                    text-[12px]
+                    text-[var(--secondary)]
+                  "
+                  title={`${viewCount} views`}
+                  aria-label={`${viewCount} views`}
+                >
+
+                  <Eye
+                    size={18}
+                    strokeWidth={1.6}
+                  />
+
+                  <span>
+                    {viewCount}
+                  </span>
+
+                </div>
+
+                {/* ==================================================
+                    SHARE BUTTON
+                =================================================== */}
 
                 {articleUrl && (
                   <ShareButtons
                     title={title}
                     url={articleUrl}
+                    onShare={
+                      handleShareCount
+                    }
+                    shareCount={
+                      shareCount
+                    }
                   />
                 )}
 
-                {/* BOOKMARK */}
+                {/* ==================================================
+                    BOOKMARK
+                =================================================== */}
 
                 <button
                   type="button"
                   aria-label="सुरक्षित राख्नुहोस्"
                   title="सुरक्षित राख्नुहोस्"
-                  onClick={handleBookmark}
+                  onClick={
+                    handleBookmark
+                  }
                   className="
                     flex
                     h-9
@@ -508,6 +997,7 @@ export default function ArticlePage({
                     hover:bg-[var(--surface-container)]
                   "
                 >
+
                   <Bookmark
                     size={19}
                     strokeWidth={1.6}
@@ -517,6 +1007,7 @@ export default function ArticlePage({
                         : "text-[var(--secondary)] hover:text-[var(--primary)]"
                     }
                   />
+
                 </button>
 
               </div>
@@ -524,7 +1015,7 @@ export default function ArticlePage({
             </div>
 
             {/* ==================================================
-                ARTICLE CONTENT
+                CONTENT
             =================================================== */}
 
             <div className="mt-7 max-w-[900px]">
@@ -545,10 +1036,14 @@ export default function ArticlePage({
                       bg-[var(--surface-container)]
                     "
                   >
+
                     <Image
-                      src={heroImageSrc}
+                      src={
+                        heroImageSrc
+                      }
                       alt={
-                        heroImageAlt || title
+                        heroImageAlt ||
+                        title
                       }
                       fill
                       sizes="
@@ -559,6 +1054,7 @@ export default function ArticlePage({
                       className="object-cover"
                       priority
                     />
+
                   </div>
 
                   {/* ==================================================
@@ -580,6 +1076,7 @@ export default function ArticlePage({
                         text-[var(--secondary)]
                       "
                     >
+
                       <span
                         className="
                           mr-2
@@ -620,7 +1117,10 @@ export default function ArticlePage({
               >
 
                 {paragraphs.map(
-                  (paragraph, index) => (
+                  (
+                    paragraph,
+                    index
+                  ) => (
                     <p
                       key={index}
                       className="mb-7 last:mb-0"
@@ -645,6 +1145,7 @@ export default function ArticlePage({
                       sm:pl-6
                     "
                   >
+
                     <p
                       className="
                         font-[family-name:var(--font-devanagari)]
@@ -659,6 +1160,7 @@ export default function ArticlePage({
                     >
                       “{pullQuote}”
                     </p>
+
                   </blockquote>
                 )}
 
@@ -693,7 +1195,7 @@ export default function ArticlePage({
               </h2>
 
               {/* ==================================================
-                  ADD COMMENT
+                  COMMENT INPUT
               =================================================== */}
 
               <div className="mb-8">
@@ -701,7 +1203,9 @@ export default function ArticlePage({
                 <textarea
                   value={comment}
                   onChange={(e) =>
-                    setComment(e.target.value)
+                    setComment(
+                      e.target.value
+                    )
                   }
                   placeholder="आफ्नो टिप्पणी लेख्नुहोस्..."
                   rows={4}
@@ -721,11 +1225,19 @@ export default function ArticlePage({
                   "
                 />
 
-                <div className="mt-3 flex justify-end">
+                <div
+                  className="
+                    mt-3
+                    flex
+                    justify-end
+                  "
+                >
 
                   <button
                     type="button"
-                    onClick={handleComment}
+                    onClick={
+                      handleComment
+                    }
                     className="
                       bg-[var(--primary)]
                       px-6
@@ -751,7 +1263,8 @@ export default function ArticlePage({
 
               <div className="space-y-5">
 
-                {comments.length === 0 ? (
+                {comments.length ===
+                0 ? (
                   <p
                     className="
                       font-[family-name:var(--font-devanagari)]
@@ -763,7 +1276,10 @@ export default function ArticlePage({
                   </p>
                 ) : (
                   comments.map(
-                    (item, index) => (
+                    (
+                      item,
+                      index
+                    ) => (
                       <div
                         key={`${item.newsId}-${index}`}
                         className="
@@ -773,9 +1289,15 @@ export default function ArticlePage({
                         "
                       >
 
-                        <div className="flex items-start gap-3">
+                        <div
+                          className="
+                            flex
+                            items-start
+                            gap-3
+                          "
+                        >
 
-                          {/* AVATAR */}
+                          {/* USER AVATAR */}
 
                           <div
                             className="
@@ -794,9 +1316,9 @@ export default function ArticlePage({
                             U
                           </div>
 
-                          {/* COMMENT */}
-
                           <div>
+
+                            {/* USER NAME */}
 
                             <p
                               className="
@@ -807,6 +1329,8 @@ export default function ArticlePage({
                               प्रयोगकर्ता
                             </p>
 
+                            {/* COMMENT */}
+
                             <p
                               className="
                                 mt-1
@@ -815,7 +1339,9 @@ export default function ArticlePage({
                                 text-[var(--on-surface)]
                               "
                             >
-                              {item.content}
+                              {
+                                item.content
+                              }
                             </p>
 
                           </div>
@@ -834,59 +1360,91 @@ export default function ArticlePage({
           </article>
 
           {/* ====================================================
-              RIGHT SIDE - ADS
+              RIGHT SIDE ADS
           ===================================================== */}
 
-          <aside className="lg:block lg:pt-10">
+          <aside
+            className="
+              lg:block
+              lg:pt-10
+            "
+          >
 
-            <div className="sticky top-2 space-y-6">
+            <div
+              className="
+                sticky
+                top-2
+                space-y-6
+              "
+            >
 
-              {/* AD 1 */}
+              {/* ==================================================
+                  AD 1
+              =================================================== */}
 
-              <div className="relative w-full overflow-hidden">
+              <div
+                className="
+                  relative
+                  aspect-[320/250]
+                  w-full
+                  overflow-hidden
+                "
+              >
+
                 <Image
                   src="/ad6.jpeg"
                   alt="विज्ञापन"
-                  width={320}
-                  height={250}
-                  className="
-                    h-auto
-                    w-full
-                    object-cover
-                  "
+                  fill
+                  sizes="320px"
+                  className="object-cover"
                 />
+
               </div>
 
-              {/* AD 2 */}
+              {/* ==================================================
+                  AD 2
+              =================================================== */}
 
-              <div className="relative w-full overflow-hidden">
+              <div
+                className="
+                  relative
+                  aspect-[320/250]
+                  w-full
+                  overflow-hidden
+                "
+              >
+
                 <Image
                   src="/ad7.jpeg"
                   alt="विज्ञापन"
-                  width={320}
-                  height={250}
-                  className="
-                    h-auto
-                    w-full
-                    object-cover
-                  "
+                  fill
+                  sizes="320px"
+                  className="object-cover"
                 />
+
               </div>
 
-              {/* AD 3 */}
+              {/* ==================================================
+                  AD 3
+              =================================================== */}
 
-              <div className="relative w-full overflow-hidden">
+              <div
+                className="
+                  relative
+                  aspect-square
+                  w-full
+                  overflow-hidden
+                "
+              >
+
                 <Image
                   src="/ad3.png"
                   alt="विज्ञापन"
-                  width={400}
-                  height={400}
-                  className="
-                    h-auto
-                    w-full
-                    object-cover
-                  "
+                  fill
+                  sizes="320px"
+                  className="object-cover"
                 />
+
               </div>
 
             </div>

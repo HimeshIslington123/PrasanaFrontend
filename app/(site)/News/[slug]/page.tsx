@@ -8,15 +8,28 @@ import { notFound } from "next/navigation";
 
 type News = {
   id: number;
+
   title: string;
+
   content: string;
+
   categoryname: string;
+
   created: string;
+
   image: string;
+
   slug: string;
 
   caption?: string | null;
+
   pullQuote?: string | null;
+
+  shareCount: number;
+
+  viewCount: number;
+
+  heroImageSrc?: string | null;
 
   comments:
     | {
@@ -46,24 +59,39 @@ async function getNews(
     );
   }
 
-  const response = await fetch(
-    `${API_BASE}/News/slug/${encodeURIComponent(
-      slug
-    )}`,
-    {
-      cache: "no-store",
-    }
-  );
+  const response =
+    await fetch(
+      `${API_BASE}/News/slug/${encodeURIComponent(
+        slug
+      )}`,
+      {
+        cache: "no-store",
+      }
+    );
 
-  if (response.status === 404) {
+  // ==========================================================
+  // NOT FOUND
+  // ==========================================================
+
+  if (
+    response.status === 404
+  ) {
     notFound();
   }
+
+  // ==========================================================
+  // OTHER API ERROR
+  // ==========================================================
 
   if (!response.ok) {
     throw new Error(
       "Failed to fetch news"
     );
   }
+
+  // ==========================================================
+  // RETURN NEWS
+  // ==========================================================
 
   return response.json();
 }
@@ -79,9 +107,11 @@ export async function generateMetadata({
     slug: string;
   }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug } =
+    await params;
 
-  const news = await getNews(slug);
+  const news =
+    await getNews(slug);
 
   // ==========================================================
   // DESCRIPTION
@@ -111,7 +141,8 @@ export async function generateMetadata({
     description,
 
     alternates: {
-      canonical: canonicalUrl,
+      canonical:
+        canonicalUrl,
     },
 
     // ========================================================
@@ -131,15 +162,25 @@ export async function generateMetadata({
 
       type: "article",
 
-      publishedTime: news.created,
+      publishedTime:
+        news.created,
 
       images: news.image
         ? [
             {
               url: news.image,
+
               width: 1200,
+
               height: 630,
-              alt: news.title,
+
+              /*
+               * IMPORTANT:
+               * Use heroImageSrc as image ALT.
+               */
+              alt:
+                news.heroImageSrc ||
+                news.title,
             },
           ]
         : [],
@@ -150,7 +191,8 @@ export async function generateMetadata({
     // ========================================================
 
     twitter: {
-      card: "summary_large_image",
+      card:
+        "summary_large_image",
 
       title: news.title,
 
@@ -175,11 +217,14 @@ export async function generateMetadata({
 
         follow: true,
 
-        "max-image-preview": "large",
+        "max-image-preview":
+          "large",
 
-        "max-snippet": -1,
+        "max-snippet":
+          -1,
 
-        "max-video-preview": -1,
+        "max-video-preview":
+          -1,
       },
     },
   };
@@ -196,9 +241,19 @@ export default async function NewsDetailPage({
     slug: string;
   }>;
 }) {
-  const { slug } = await params;
+  // ==========================================================
+  // GET SLUG
+  // ==========================================================
 
-  const news = await getNews(slug);
+  const { slug } =
+    await params;
+
+  // ==========================================================
+  // GET NEWS
+  // ==========================================================
+
+  const news =
+    await getNews(slug);
 
   // ==========================================================
   // DESCRIPTION
@@ -307,35 +362,114 @@ export default async function NewsDetailPage({
 
       <ArticlePage
         id={news.id}
-        title={news.title}
+
+        title={
+          news.title
+        }
+
+        // ======================================================
+        // ARTICLE BODY
+        // ======================================================
+
         paragraphs={
           news.content
             ?.split("\n")
-            .map((paragraph) =>
-              paragraph.trim()
+            .map(
+              (
+                paragraph
+              ) =>
+                paragraph.trim()
             )
-            .filter(Boolean) || []
+            .filter(Boolean) ||
+          []
         }
+
+        // ======================================================
+        // CATEGORY
+        // ======================================================
+
         category={
           news.categoryname
         }
+
+        // ======================================================
+        // DATE
+        // ======================================================
+
         publishedAt={
           news.created
         }
+
+        // ======================================================
+        // HERO IMAGE URL
+        // ======================================================
+
         heroImageSrc={
           news.image
         }
+
+        // ======================================================
+        // HERO IMAGE ALT
+        // ======================================================
+
+        /*
+         * Your API gives:
+         *
+         * image:
+         * "https://res.cloudinary....jpg"
+         *
+         * heroImageSrc:
+         * "Lionel Messi playing for Argentina"
+         *
+         * So:
+         *
+         * heroImageSrc = actual image
+         * heroImageAlt = description
+         */
+
         heroImageAlt={
+          news.heroImageSrc ||
           news.title
         }
+
+        // ======================================================
+        // CAPTION
+        // ======================================================
+
         caption={
           news.caption
         }
+
+        // ======================================================
+        // PULL QUOTE
+        // ======================================================
+
         pullQuote={
           news.pullQuote
         }
+
+        // ======================================================
+        // COMMENTS
+        // ======================================================
+
         comments={
           news.comments ?? []
+        }
+
+        // ======================================================
+        // VIEW COUNT
+        // ======================================================
+
+        initialViewCount={
+          news.viewCount ?? 0
+        }
+
+        // ======================================================
+        // SHARE COUNT
+        // ======================================================
+
+        initialShareCount={
+          news.shareCount ?? 0
         }
       />
     </>
