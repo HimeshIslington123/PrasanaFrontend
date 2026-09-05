@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
   title: {
     default:
-      "प्रश्ना न्यूज | नेपालको ताजा र विश्वसनीय समाचार",
+     "Nepal News | Nepali News | Breaking News Nepal | Latest Nepal News | Prashnaa",
 
     template: "%s | प्रश्ना न्यूज",
   },
