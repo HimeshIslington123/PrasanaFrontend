@@ -1,17 +1,31 @@
 "use client";
 
 import Image from "next/image";
-import { Share2, Bookmark, ChevronRight } from "lucide-react";
+import {
+  Bookmark,
+  ChevronRight,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+import ShareButtons from "./ShareButtons";
+
+// ============================================================
+// TYPES
+// ============================================================
+
+type ArticleComment = {
+  newsId: number;
+  content: string;
+};
+
 type ArticlePageProps = {
   id: number;
   title: string;
 
   category?: string;
-
 
   authorName?: string;
   authorRole?: string;
@@ -21,27 +35,24 @@ type ArticlePageProps = {
   heroImageSrc?: string;
   heroImageAlt?: string;
 
-  // API can return null
   caption?: string | null;
 
   paragraphs?: string[];
 
-  // API can return null
   pullQuote?: string | null;
 
-  comments?: {
-    newsId: number;
-    content: string;
-  }[];
+  comments?: ArticleComment[];
 };
+
+// ============================================================
+// COMPONENT
+// ============================================================
 
 export default function ArticlePage({
   id,
   title,
 
   category = "प्रविधि",
-
- 
 
   authorName = "प्रश्न समाचार ब्युरो",
   authorRole = "",
@@ -58,29 +69,49 @@ export default function ArticlePage({
 
   comments: initialComments = [],
 }: ArticlePageProps) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [savedid, setSavedId] = useState<number | null>(null);
+  const [isBookmarked, setIsBookmarked] =
+    useState(false);
 
-  // Text currently being typed
   const [comment, setComment] = useState("");
 
-  // List of existing comments
-  const [comments, setComments] = useState(initialComments);
+  const [comments, setComments] =
+    useState<ArticleComment[]>(initialComments);
 
   const router = useRouter();
+
+  // ============================================================
+  // ARTICLE URL
+  // ============================================================
+
+  const [articleUrl, setArticleUrl] =
+    useState("");
+
+  useEffect(() => {
+    setArticleUrl(window.location.href);
+  }, []);
+
+  // ============================================================
+  // UPDATE COMMENTS IF SERVER DATA CHANGES
+  // ============================================================
+
+  useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
 
   // ============================================================
   // ADD COMMENT
   // ============================================================
 
   const handleComment = async () => {
-    if (!comment.trim()) return;
+    if (!comment.trim()) {
+      return;
+    }
 
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/Comment`,
         {
-          Content: comment,
+          Content: comment.trim(),
           NewsId: id,
         },
         {
@@ -103,7 +134,10 @@ export default function ArticlePage({
         return;
       }
 
-      console.error(error);
+      console.error(
+        "Failed to add comment:",
+        error
+      );
     }
   };
 
@@ -111,7 +145,7 @@ export default function ArticlePage({
   // BOOKMARK
   // ============================================================
 
-  const handleId = async (id: number) => {
+  const handleBookmark = async () => {
     try {
       if (!isBookmarked) {
         await axios.post(
@@ -146,7 +180,10 @@ export default function ArticlePage({
         return;
       }
 
-      console.error(error);
+      console.error(
+        "Bookmark error:",
+        error
+      );
     }
   };
 
@@ -157,16 +194,24 @@ export default function ArticlePage({
   useEffect(() => {
     const checkBookmark = async () => {
       try {
-        const res = await axios.get(
+        const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/bookmark/${id}`,
           {
             withCredentials: true,
           }
         );
 
-        setIsBookmarked(res.data);
-      } catch (error) {
-        console.error(error);
+        setIsBookmarked(
+          Boolean(response.data)
+        );
+      } catch (error: any) {
+        // Don't redirect if the user isn't logged in.
+        if (error.response?.status !== 401) {
+          console.error(
+            "Failed to check bookmark:",
+            error
+          );
+        }
       }
     };
 
@@ -180,9 +225,9 @@ export default function ArticlePage({
   return (
     <main className="min-h-screen bg-[var(--background)]">
 
-      {/* ========================================================
+      {/* ======================================================
           MAIN PAGE CONTAINER
-      ========================================================= */}
+      ======================================================= */}
 
       <div
         className="
@@ -195,9 +240,9 @@ export default function ArticlePage({
         "
       >
 
-        {/* ======================================================
+        {/* ====================================================
             GRID
-        ======================================================= */}
+        ===================================================== */}
 
         <div
           className="
@@ -209,9 +254,9 @@ export default function ArticlePage({
           "
         >
 
-          {/* ====================================================
+          {/* ==================================================
               LEFT SIDE - ARTICLE
-          ===================================================== */}
+          =================================================== */}
 
           <article
             className="
@@ -227,49 +272,53 @@ export default function ArticlePage({
             "
           >
 
-          <nav
-  aria-label="Breadcrumb"
-  className="
-    mb-6
-    flex
-    items-center
-    font-[family-name:var(--font-devanagari)]
-    text-[12px]
-    leading-[16px]
-  "
->
-  {/* Home */}
-  <Link
-    href="/"
-    className="
-      text-[var(--secondary)]
-      transition-colors
-      hover:text-[var(--primary)]
-    "
-  >
-    गृहपृष्ठ
-  </Link>
+            {/* ==================================================
+                BREADCRUMB
+            =================================================== */}
 
-  {/* Arrow */}
-  <ChevronRight
-    size={14}
-    strokeWidth={1.5}
-    className="mx-1 text-[var(--secondary)]"
-  />
+            <nav
+              aria-label="Breadcrumb"
+              className="
+                mb-6
+                flex
+                items-center
+                font-[family-name:var(--font-devanagari)]
+                text-[12px]
+                leading-[16px]
+              "
+            >
 
-  {/* Category */}
-  <span className="text-[var(--on-surface)]">
-    {category}
-  </span>
-</nav>
+              <Link
+                href="/"
+                className="
+                  text-[var(--secondary)]
+                  transition-colors
+                  hover:text-[var(--primary)]
+                "
+              >
+                गृहपृष्ठ
+              </Link>
+
+              <ChevronRight
+                size={14}
+                strokeWidth={1.5}
+                className="
+                  mx-1
+                  text-[var(--secondary)]
+                "
+              />
+
+              <span className="text-[var(--on-surface)]">
+                {category}
+              </span>
+
+            </nav>
 
             {/* ==================================================
                 ARTICLE HEADER
             =================================================== */}
 
             <header className="max-w-[900px]">
-
-              {/* Category */}
 
               {category && (
                 <div className="mb-3">
@@ -287,8 +336,6 @@ export default function ArticlePage({
                   </span>
                 </div>
               )}
-
-              {/* Title */}
 
               <h1
                 className="
@@ -320,26 +367,39 @@ export default function ArticlePage({
                 flex
                 items-center
                 justify-between
+                gap-4
                 border-y
                 border-[var(--outline-variant)]
                 py-4
               "
             >
 
-              {/* Author */}
+              {/* ==================================================
+                  AUTHOR
+              =================================================== */}
 
-              <div className="flex items-center gap-3">
-
-                {/* Author Image */}
+              <div className="flex min-w-0 items-center gap-3">
 
                 {authorImageSrc ? (
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                  <div
+                    className="
+                      relative
+                      h-10
+                      w-10
+                      shrink-0
+                      overflow-hidden
+                      rounded-full
+                    "
+                  >
                     <Image
                       src={authorImageSrc}
                       alt={authorName}
                       fill
                       sizes="40px"
-                      className="object-contain object-top"
+                      className="
+                        object-contain
+                        object-top
+                      "
                     />
                   </div>
                 ) : (
@@ -364,12 +424,11 @@ export default function ArticlePage({
                   </div>
                 )}
 
-                {/* Author Information */}
-
-                <div className="leading-tight">
+                <div className="min-w-0 leading-tight">
 
                   <p
                     className="
+                      truncate
                       font-[family-name:var(--font-devanagari)]
                       text-[13px]
                       font-bold
@@ -409,42 +468,44 @@ export default function ArticlePage({
 
               </div>
 
-              {/* Share / Bookmark */}
+              {/* ==================================================
+                  SHARE + BOOKMARK
+              =================================================== */}
 
-              <div className="flex items-center gap-1">
+              <div
+                className="
+                  flex
+                  shrink-0
+                  items-center
+                  gap-1
+                "
+              >
 
-                {/* Share */}
+                {/* SHARE */}
 
-                <button
-                  type="button"
-                  aria-label="साझा गर्नुहोस्"
-                  className="
-                    flex
-                    h-9
-                    w-9
-                    items-center
-                    justify-center
-                    text-[var(--secondary)]
-                    transition-colors
-                    hover:text-[var(--primary)]
-                  "
-                >
-                  <Share2 size={19} strokeWidth={1.6} />
-                </button>
+                {articleUrl && (
+                  <ShareButtons
+                    title={title}
+                    url={articleUrl}
+                  />
+                )}
 
-                {/* Bookmark */}
+                {/* BOOKMARK */}
 
                 <button
                   type="button"
                   aria-label="सुरक्षित राख्नुहोस्"
-                  onClick={() => handleId(id)}
+                  title="सुरक्षित राख्नुहोस्"
+                  onClick={handleBookmark}
                   className="
                     flex
                     h-9
                     w-9
                     items-center
                     justify-center
+                    rounded-full
                     transition-colors
+                    hover:bg-[var(--surface-container)]
                   "
                 >
                   <Bookmark
@@ -468,7 +529,9 @@ export default function ArticlePage({
 
             <div className="mt-7 max-w-[900px]">
 
-              {/* HERO IMAGE */}
+              {/* ==================================================
+                  HERO IMAGE
+              =================================================== */}
 
               {heroImageSrc && (
                 <figure>
@@ -484,7 +547,9 @@ export default function ArticlePage({
                   >
                     <Image
                       src={heroImageSrc}
-                      alt={heroImageAlt || title}
+                      alt={
+                        heroImageAlt || title
+                      }
                       fill
                       sizes="
                         (max-width: 640px) 100vw,
@@ -496,7 +561,9 @@ export default function ArticlePage({
                     />
                   </div>
 
-                  {/* IMAGE CAPTION */}
+                  {/* ==================================================
+                      CAPTION
+                  =================================================== */}
 
                   {caption && (
                     <figcaption
@@ -552,14 +619,16 @@ export default function ArticlePage({
                 "
               >
 
-                {paragraphs.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className="mb-7 last:mb-0"
-                  >
-                    {paragraph}
-                  </p>
-                ))}
+                {paragraphs.map(
+                  (paragraph, index) => (
+                    <p
+                      key={index}
+                      className="mb-7 last:mb-0"
+                    >
+                      {paragraph}
+                    </p>
+                  )
+                )}
 
                 {/* ==================================================
                     PULL QUOTE
@@ -623,13 +692,17 @@ export default function ArticlePage({
                 टिप्पणी गर्नुहोस्
               </h2>
 
-              {/* ADD COMMENT */}
+              {/* ==================================================
+                  ADD COMMENT
+              =================================================== */}
 
               <div className="mb-8">
 
                 <textarea
                   value={comment}
-                  onChange={(e) => setComment(e.target.value)}
+                  onChange={(e) =>
+                    setComment(e.target.value)
+                  }
                   placeholder="आफ्नो टिप्पणी लेख्नुहोस्..."
                   rows={4}
                   className="
@@ -672,7 +745,9 @@ export default function ArticlePage({
 
               </div>
 
-              {/* COMMENTS LIST */}
+              {/* ==================================================
+                  COMMENTS LIST
+              =================================================== */}
 
               <div className="space-y-5">
 
@@ -687,67 +762,69 @@ export default function ArticlePage({
                     अहिलेसम्म कुनै टिप्पणी छैन।
                   </p>
                 ) : (
-                  comments.map((item, index) => (
-                    <div
-                      key={`${item.newsId}-${index}`}
-                      className="
-                        border-b
-                        border-[var(--outline-variant)]
-                        pb-5
-                      "
-                    >
+                  comments.map(
+                    (item, index) => (
+                      <div
+                        key={`${item.newsId}-${index}`}
+                        className="
+                          border-b
+                          border-[var(--outline-variant)]
+                          pb-5
+                        "
+                      >
 
-                      <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-3">
 
-                        {/* User Avatar */}
+                          {/* AVATAR */}
 
-                        <div
-                          className="
-                            flex
-                            h-9
-                            w-9
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-full
-                            bg-[var(--surface-container-high)]
-                            font-bold
-                            text-[var(--primary)]
-                          "
-                        >
-                          U
-                        </div>
-
-                        {/* Comment */}
-
-                        <div>
-
-                          <p
+                          <div
                             className="
-                              font-[family-name:var(--font-devanagari)]
+                              flex
+                              h-9
+                              w-9
+                              shrink-0
+                              items-center
+                              justify-center
+                              rounded-full
+                              bg-[var(--surface-container-high)]
                               font-bold
+                              text-[var(--primary)]
                             "
                           >
-                            प्रयोगकर्ता
-                          </p>
+                            U
+                          </div>
 
-                          <p
-                            className="
-                              mt-1
-                              font-[family-name:var(--font-devanagari)]
-                              text-[15px]
-                              text-[var(--on-surface)]
-                            "
-                          >
-                            {item.content}
-                          </p>
+                          {/* COMMENT */}
+
+                          <div>
+
+                            <p
+                              className="
+                                font-[family-name:var(--font-devanagari)]
+                                font-bold
+                              "
+                            >
+                              प्रयोगकर्ता
+                            </p>
+
+                            <p
+                              className="
+                                mt-1
+                                font-[family-name:var(--font-devanagari)]
+                                text-[15px]
+                                text-[var(--on-surface)]
+                              "
+                            >
+                              {item.content}
+                            </p>
+
+                          </div>
 
                         </div>
 
                       </div>
-
-                    </div>
-                  ))
+                    )
+                  )
                 )}
 
               </div>
@@ -755,7 +832,6 @@ export default function ArticlePage({
             </section>
 
           </article>
-
 
           {/* ====================================================
               RIGHT SIDE - ADS
@@ -765,7 +841,7 @@ export default function ArticlePage({
 
             <div className="sticky top-2 space-y-6">
 
-              {/* Advertisement 1 */}
+              {/* AD 1 */}
 
               <div className="relative w-full overflow-hidden">
                 <Image
@@ -773,11 +849,15 @@ export default function ArticlePage({
                   alt="विज्ञापन"
                   width={320}
                   height={250}
-                  className="h-auto w-full object-cover"
+                  className="
+                    h-auto
+                    w-full
+                    object-cover
+                  "
                 />
               </div>
 
-              {/* Advertisement 2 */}
+              {/* AD 2 */}
 
               <div className="relative w-full overflow-hidden">
                 <Image
@@ -785,11 +865,15 @@ export default function ArticlePage({
                   alt="विज्ञापन"
                   width={320}
                   height={250}
-                  className="h-auto w-full object-cover"
+                  className="
+                    h-auto
+                    w-full
+                    object-cover
+                  "
                 />
               </div>
 
-              {/* Advertisement 3 */}
+              {/* AD 3 */}
 
               <div className="relative w-full overflow-hidden">
                 <Image
@@ -797,7 +881,11 @@ export default function ArticlePage({
                   alt="विज्ञापन"
                   width={400}
                   height={400}
-                  className="h-auto w-full object-cover"
+                  className="
+                    h-auto
+                    w-full
+                    object-cover
+                  "
                 />
               </div>
 

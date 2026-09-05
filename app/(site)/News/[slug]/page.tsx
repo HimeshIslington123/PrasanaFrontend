@@ -30,21 +30,26 @@ type News = {
 // API
 // ============================================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL;
 
 // ============================================================
 // GET NEWS BY SLUG
 // ============================================================
 
-async function getNews(slug: string): Promise<News> {
+async function getNews(
+  slug: string
+): Promise<News> {
   if (!API_BASE) {
     throw new Error(
-      "API_URL environment variable is not configured"
+      "NEXT_PUBLIC_API_URL environment variable is not configured"
     );
   }
 
   const response = await fetch(
-    `${API_BASE}/News/slug/${encodeURIComponent(slug)}`,
+    `${API_BASE}/News/slug/${encodeURIComponent(
+      slug
+    )}`,
     {
       cache: "no-store",
     }
@@ -55,7 +60,9 @@ async function getNews(slug: string): Promise<News> {
   }
 
   if (!response.ok) {
-    throw new Error("Failed to fetch news");
+    throw new Error(
+      "Failed to fetch news"
+    );
   }
 
   return response.json();
@@ -65,18 +72,21 @@ async function getNews(slug: string): Promise<News> {
 // SEO METADATA
 // ============================================================
 
-export async function generateMetadata(
-  {
-    params,
-  }: {
-    params: Promise<{ slug: string }>;
-  }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{
+    slug: string;
+  }>;
+}): Promise<Metadata> {
   const { slug } = await params;
 
   const news = await getNews(slug);
 
-  // Clean description
+  // ==========================================================
+  // DESCRIPTION
+  // ==========================================================
+
   const description =
     news.content
       ?.replace(/\s+/g, " ")
@@ -84,22 +94,21 @@ export async function generateMetadata(
       .substring(0, 160) ||
     "प्रश्ना न्यूजबाट पछिल्लो समाचार पढ्नुहोस्।";
 
-  // Canonical URL
+  // ==========================================================
+  // CANONICAL URL
+  // ==========================================================
+
   const canonicalUrl =
     `https://www.prashnaa.com/news/${news.slug}`;
 
-  return {
-    // ========================================================
-    // BASIC SEO
-    // ========================================================
+  // ==========================================================
+  // METADATA
+  // ==========================================================
 
+  return {
     title: news.title,
 
     description,
-
-    // ========================================================
-    // CANONICAL
-    // ========================================================
 
     alternates: {
       canonical: canonicalUrl,
@@ -128,11 +137,8 @@ export async function generateMetadata(
         ? [
             {
               url: news.image,
-
               width: 1200,
-
               height: 630,
-
               alt: news.title,
             },
           ]
@@ -140,7 +146,7 @@ export async function generateMetadata(
     },
 
     // ========================================================
-    // TWITTER / X
+    // TWITTER
     // ========================================================
 
     twitter: {
@@ -186,7 +192,9 @@ export async function generateMetadata(
 export default async function NewsDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{
+    slug: string;
+  }>;
 }) {
   const { slug } = await params;
 
@@ -211,19 +219,18 @@ export default async function NewsDetailPage({
     `https://www.prashnaa.com/news/${news.slug}`;
 
   // ==========================================================
-  // NEWS ARTICLE STRUCTURED DATA
+  // STRUCTURED DATA
   // ==========================================================
 
   const structuredData = {
-    "@context": "https://schema.org",
+    "@context":
+      "https://schema.org",
 
-    "@type": "NewsArticle",
+    "@type":
+      "NewsArticle",
 
-    // --------------------------------------------------------
-    // ARTICLE
-    // --------------------------------------------------------
-
-    headline: news.title,
+    headline:
+      news.title,
 
     description,
 
@@ -231,55 +238,47 @@ export default async function NewsDetailPage({
       ? [news.image]
       : [],
 
-    datePublished: news.created,
+    datePublished:
+      news.created,
 
-    dateModified: news.created,
-
-    // --------------------------------------------------------
-    // MAIN URL
-    // --------------------------------------------------------
+    dateModified:
+      news.created,
 
     mainEntityOfPage: {
-      "@type": "WebPage",
+      "@type":
+        "WebPage",
 
-      "@id": canonicalUrl,
+      "@id":
+        canonicalUrl,
     },
-
-    // --------------------------------------------------------
-    // AUTHOR
-    // --------------------------------------------------------
 
     author: {
-      "@type": "Organization",
+      "@type":
+        "Organization",
 
-      name: "प्रश्ना न्यूज",
+      name:
+        "प्रश्ना न्यूज",
 
-      url: "https://www.prashnaa.com/",
+      url:
+        "https://www.prashnaa.com/",
     },
-
-    // --------------------------------------------------------
-    // PUBLISHER
-    // --------------------------------------------------------
 
     publisher: {
-      "@type": "Organization",
+      "@type":
+        "Organization",
 
-      name: "प्रश्ना न्यूज",
+      name:
+        "प्रश्ना न्यूज",
 
-      url: "https://www.prashnaa.com/",
+      url:
+        "https://www.prashnaa.com/",
     },
 
-    // --------------------------------------------------------
-    // CATEGORY
-    // --------------------------------------------------------
+    articleSection:
+      news.categoryname,
 
-    articleSection: news.categoryname,
-
-    // --------------------------------------------------------
-    // LANGUAGE
-    // --------------------------------------------------------
-
-    inLanguage: "ne-NP",
+    inLanguage:
+      "ne-NP",
   };
 
   // ==========================================================
@@ -289,33 +288,55 @@ export default async function NewsDetailPage({
   return (
     <>
       {/* ======================================================
-          NEWS ARTICLE JSON-LD
+          JSON-LD
       ======================================================= */}
 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData),
+          __html:
+            JSON.stringify(
+              structuredData
+            ),
         }}
       />
 
       {/* ======================================================
-          ARTICLE UI
+          ARTICLE
       ======================================================= */}
 
       <ArticlePage
         id={news.id}
         title={news.title}
-        paragraphs={news.content
-          ?.split("\n")
-          .filter(Boolean)}
-        category={news.categoryname}
-        publishedAt={news.created}
-        heroImageSrc={news.image}
-        heroImageAlt={news.title}
-        caption={news.caption}
-        pullQuote={news.pullQuote}
-        comments={news.comments ?? []}
+        paragraphs={
+          news.content
+            ?.split("\n")
+            .map((paragraph) =>
+              paragraph.trim()
+            )
+            .filter(Boolean) || []
+        }
+        category={
+          news.categoryname
+        }
+        publishedAt={
+          news.created
+        }
+        heroImageSrc={
+          news.image
+        }
+        heroImageAlt={
+          news.title
+        }
+        caption={
+          news.caption
+        }
+        pullQuote={
+          news.pullQuote
+        }
+        comments={
+          news.comments ?? []
+        }
       />
     </>
   );

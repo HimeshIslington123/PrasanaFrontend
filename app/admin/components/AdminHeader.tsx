@@ -13,7 +13,7 @@ import {
   LogOut,
   Menu,
   X,
-  Tags
+  Tags,NotebookPen
 } from "lucide-react";
 
 const navItems = [
@@ -41,6 +41,11 @@ const navItems = [
     name: "Category",
     href: "/admin/categories",
     icon: Tags,
+  },
+   {
+    name: "Blog",
+    href: "/admin/blog",
+    icon: NotebookPen,
   },
 ];
 
