@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import {
   Clock,
-  Share2,
   Eye,
   MessageCircle,
   Mail,
 } from "lucide-react";
+
+import BlogCounter from "@/app/components/BlogCounter";
 
 // ============================================================
 // TYPES
@@ -86,7 +86,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  const blog = await getBlog(slug);
+  const blog =
+    await getBlog(slug);
+
+  // ==========================================================
+  // DESCRIPTION
+  // ==========================================================
 
   const description =
     blog.content
@@ -95,8 +100,25 @@ export async function generateMetadata({
       .substring(0, 160) ||
     "प्रश्ना न्यूजबाट पछिल्लो ब्लग पढ्नुहोस्।";
 
+  // ==========================================================
+  // IMAGE
+  // ==========================================================
+
+  const image =
+    blog.heroImageSrc ||
+    blog.image ||
+    "";
+
+  // ==========================================================
+  // CANONICAL URL
+  // ==========================================================
+
   const canonicalUrl =
     `https://www.prashnaa.com/blog/${blog.slug}`;
+
+  // ==========================================================
+  // METADATA
+  // ==========================================================
 
   return {
     title: blog.title,
@@ -122,21 +144,16 @@ export async function generateMetadata({
 
       publishedTime: blog.date,
 
-      images:
-        blog.heroImageSrc ||
-        blog.image
-          ? [
-              {
-                url:
-                  blog.heroImageSrc ||
-                  blog.image ||
-                  "",
-                width: 1200,
-                height: 630,
-                alt: blog.title,
-              },
-            ]
-          : [],
+      images: image
+        ? [
+            {
+              url: image,
+              width: 1200,
+              height: 630,
+              alt: blog.title,
+            },
+          ]
+        : [],
     },
 
     twitter: {
@@ -146,15 +163,9 @@ export async function generateMetadata({
 
       description,
 
-      images:
-        blog.heroImageSrc ||
-        blog.image
-          ? [
-              blog.heroImageSrc ||
-                blog.image ||
-                "",
-            ]
-          : [],
+      images: image
+        ? [image]
+        : [],
     },
 
     robots: {
@@ -164,9 +175,14 @@ export async function generateMetadata({
       googleBot: {
         index: true,
         follow: true,
-        "max-image-preview": "large",
+
+        "max-image-preview":
+          "large",
+
         "max-snippet": -1,
-        "max-video-preview": -1,
+
+        "max-video-preview":
+          -1,
       },
     },
   };
@@ -215,14 +231,31 @@ export default async function BlogDetailPage({
     slug: string;
   }>;
 }) {
-  const { slug } = await params;
+  // ==========================================================
+  // GET SLUG
+  // ==========================================================
+
+  const { slug } =
+    await params;
+
+  // ==========================================================
+  // GET BLOG
+  // ==========================================================
 
   const blog =
     await getBlog(slug);
 
+  // ==========================================================
+  // IMAGE
+  // ==========================================================
+
   const image =
     blog.heroImageSrc ||
     blog.image;
+
+  // ==========================================================
+  // PARAGRAPHS
+  // ==========================================================
 
   const paragraphs =
     blog.content
@@ -233,11 +266,15 @@ export default async function BlogDetailPage({
       ) || [];
 
   // ==========================================================
-  // STRUCTURED DATA
+  // CANONICAL URL
   // ==========================================================
 
   const canonicalUrl =
     `https://www.prashnaa.com/blog/${blog.slug}`;
+
+  // ==========================================================
+  // DESCRIPTION
+  // ==========================================================
 
   const description =
     blog.content
@@ -246,12 +283,19 @@ export default async function BlogDetailPage({
       .substring(0, 160) ||
     "प्रश्ना न्यूजबाट पछिल्लो ब्लग पढ्नुहोस्।";
 
+  // ==========================================================
+  // STRUCTURED DATA
+  // ==========================================================
+
   const structuredData = {
-    "@context": "https://schema.org",
+    "@context":
+      "https://schema.org",
 
-    "@type": "BlogPosting",
+    "@type":
+      "BlogPosting",
 
-    headline: blog.title,
+    headline:
+      blog.title,
 
     description,
 
@@ -259,28 +303,44 @@ export default async function BlogDetailPage({
       ? [image]
       : [],
 
-    datePublished: blog.date,
+    datePublished:
+      blog.date,
 
-    dateModified: blog.date,
+    dateModified:
+      blog.date,
 
     mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": canonicalUrl,
+      "@type":
+        "WebPage",
+
+      "@id":
+        canonicalUrl,
     },
 
     author: {
-      "@type": "Organization",
-      name: "प्रश्ना न्यूज",
-      url: "https://www.prashnaa.com/",
+      "@type":
+        "Organization",
+
+      name:
+        "प्रश्ना न्यूज",
+
+      url:
+        "https://www.prashnaa.com/",
     },
 
     publisher: {
-      "@type": "Organization",
-      name: "प्रश्ना न्यूज",
-      url: "https://www.prashnaa.com/",
+      "@type":
+        "Organization",
+
+      name:
+        "प्रश्ना न्यूज",
+
+      url:
+        "https://www.prashnaa.com/",
     },
 
-    inLanguage: "ne-NP",
+    inLanguage:
+      "ne-NP",
   };
 
   // ==========================================================
@@ -307,7 +367,12 @@ export default async function BlogDetailPage({
           BLOG PAGE
       ======================================================= */}
 
-      <main className="min-h-screen bg-[#faf8f6]">
+      <main
+        className="
+          min-h-screen
+          bg-[#faf8f6]
+        "
+      >
         <div
           className="
             mx-auto
@@ -346,8 +411,15 @@ export default async function BlogDetailPage({
                   ARTICLE HEADER
               ================================================ */}
 
-              <div className="p-5 sm:p-8">
-                {/* BLOG LABEL */}
+              <div
+                className="
+                  p-5
+                  sm:p-8
+                "
+              >
+                {/* =================================================
+                    BLOG LABEL
+                ================================================== */}
 
                 <span
                   className="
@@ -365,7 +437,9 @@ export default async function BlogDetailPage({
                   ब्लग
                 </span>
 
-                {/* TITLE */}
+                {/* =================================================
+                    TITLE
+                ================================================== */}
 
                 <h1
                   className="
@@ -382,7 +456,9 @@ export default async function BlogDetailPage({
                   {blog.title}
                 </h1>
 
-                {/* DATE + STATS */}
+                {/* =================================================
+                    DATE + COUNTERS + SHARE
+                ================================================== */}
 
                 <div
                   className="
@@ -391,19 +467,25 @@ export default async function BlogDetailPage({
                     flex-wrap
                     items-center
                     gap-x-5
-                    gap-y-2
-                    text-xs
-                    text-gray-500
+                    gap-y-3
                   "
                 >
+                  {/* =================================================
+                      DATE
+                  ================================================== */}
+
                   <div
                     className="
                       flex
                       items-center
                       gap-2
+                      text-xs
+                      text-gray-500
                     "
                   >
-                    <Clock size={14} />
+                    <Clock
+                      size={14}
+                    />
 
                     <time
                       dateTime={
@@ -416,26 +498,17 @@ export default async function BlogDetailPage({
                     </time>
                   </div>
 
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-2
-                    "
-                  >
-                    <Eye size={14} />
-
-                    <span>
-                      {blog.viewCount}{" "}
-                      views
-                    </span>
-                  </div>
+                  {/* =================================================
+                      COMMENTS
+                  ================================================== */}
 
                   <div
                     className="
                       flex
                       items-center
                       gap-2
+                      text-xs
+                      text-gray-500
                     "
                   >
                     <MessageCircle
@@ -450,20 +523,27 @@ export default async function BlogDetailPage({
                     </span>
                   </div>
 
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-2
-                    "
-                  >
-                    <Share2 size={14} />
+                  {/* =================================================
+                      VIEW + SHARE
+                  ================================================== */}
 
-                    <span>
-                      {blog.shareCount}{" "}
-                      shares
-                    </span>
-                  </div>
+                  <BlogCounter
+                    blogId={
+                      blog.id
+                    }
+                    title={
+                      blog.title
+                    }
+                    url={
+                      canonicalUrl
+                    }
+                    initialViewCount={
+                      blog.viewCount
+                    }
+                    initialShareCount={
+                      blog.shareCount
+                    }
+                  />
                 </div>
               </div>
 
@@ -483,7 +563,9 @@ export default async function BlogDetailPage({
                 >
                   <img
                     src={image}
-                    alt={blog.title}
+                    alt={
+                      blog.title
+                    }
                     className="
                       h-full
                       w-full
@@ -494,7 +576,7 @@ export default async function BlogDetailPage({
               )}
 
               {/* =================================================
-                  CAPTION
+                  IMAGE CAPTION
               ================================================== */}
 
               {image && (
@@ -523,6 +605,10 @@ export default async function BlogDetailPage({
                   sm:py-9
                 "
               >
+                {/* =================================================
+                    PARAGRAPHS
+                ================================================== */}
+
                 {paragraphs.map(
                   (
                     paragraph,
@@ -542,7 +628,9 @@ export default async function BlogDetailPage({
 
                     return (
                       <p
-                        key={index}
+                        key={
+                          index
+                        }
                         className="
                           mb-5
                           font-[family-name:var(--font-devanagari)]
@@ -553,7 +641,9 @@ export default async function BlogDetailPage({
                           sm:leading-9
                         "
                       >
-                        {paragraph}
+                        {
+                          paragraph
+                        }
                       </p>
                     );
                   }
@@ -581,12 +671,16 @@ export default async function BlogDetailPage({
                       sm:text-2xl
                     "
                   >
-                    “{blog.pullQuote}”
+                    “
+                    {
+                      blog.pullQuote
+                    }
+                    ”
                   </blockquote>
                 )}
 
                 {/* =================================================
-                    SHARE
+                    BOTTOM SHARE
                 ================================================== */}
 
                 <div
@@ -600,38 +694,40 @@ export default async function BlogDetailPage({
                     pt-5
                   "
                 >
-                  <span
-                    className="
-                      font-[family-name:var(--font-devanagari)]
-                      text-sm
-                      text-gray-500
-                    "
-                  >
-                    यो ब्लग शेयर गर्नुहोस्
-                  </span>
+                  <div>
+                    <span
+                      className="
+                        font-[family-name:var(--font-devanagari)]
+                        text-sm
+                        text-gray-500
+                      "
+                    >
+                      यो ब्लग शेयर
+                      गर्नुहोस्
+                    </span>
+                  </div>
 
-                  <button
-                    type="button"
-                    className="
-                      flex
-                      items-center
-                      gap-2
-                      bg-[#6d001b]
-                      px-4
-                      py-2
-                      text-sm
-                      font-medium
-                      text-white
-                      transition
-                      hover:opacity-90
-                    "
-                  >
-                    <Share2
-                      size={15}
-                    />
+                  {/* =================================================
+                      BOTTOM SHARE BUTTON
+                  ================================================== */}
 
-                    Share
-                  </button>
+                  <BlogCounter
+                    blogId={
+                      blog.id
+                    }
+                    title={
+                      blog.title
+                    }
+                    url={
+                      canonicalUrl
+                    }
+                    initialViewCount={
+                      blog.viewCount
+                    }
+                    initialShareCount={
+                      blog.shareCount
+                    }
+                  />
                 </div>
               </div>
             </article>
@@ -649,7 +745,7 @@ export default async function BlogDetailPage({
               "
             >
               {/* =================================================
-                  ADVERTISEMENT
+                  FIRST AD
               ================================================== */}
 
               <section

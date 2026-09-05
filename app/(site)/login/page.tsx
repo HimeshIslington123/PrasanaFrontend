@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -22,26 +23,63 @@ export default function LoginPage() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-  // If already logged in, redirect based on role
+  // ============================================================
+  // CHECK AUTHENTICATION
+  // ============================================================
   useEffect(() => {
-    if (!context.loading && context.user) {
-      if (
-        context.user.role === "Admin" ||
-        context.user.role === "admin"
-      ) {
-        router.replace("/admin/newsDashboard");
-      } else {
-        router.replace("/");
+    const checkUser = async () => {
+      try {
+       
+        await context.refreshUser();
+      } catch (error) {
+        console.log("User is not logged in");
       }
+    };
+
+    if (!context.loading && !context.user) {
+      checkUser();
+    }
+  }, []);
+
+  // ============================================================
+  // REDIRECT IF USER IS LOGGED IN
+  // ============================================================
+  useEffect(() => {
+    if (context.loading) {
+      return;
+    }
+
+    if (!context.user) {
+      return;
+    }
+
+    console.log("Authenticated user:", context.user);
+
+    if (
+      context.user.role === "Admin" ||
+      context.user.role === "admin"
+    ) {
+      router.replace("/admin/newsDashboard");
+    } else {
+      router.replace("/");
     }
   }, [context.user, context.loading, router]);
 
-  // Google Login
+  // ============================================================
+  // GOOGLE LOGIN
+  // ============================================================
   const handleGoogleLogin = () => {
+    if (!API_BASE) {
+      setError("API URL configuration missing.");
+      return;
+    }
+
     window.location.href = `${API_BASE}/Authencation/google`;
   };
 
-  // Normal Login
+  // ============================================================
+  // NORMAL LOGIN
+  // ============================================================
   const handleLogin = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
@@ -64,9 +102,10 @@ export default function LoginPage() {
 
       console.log("Login successful:", response.data);
 
-   await context.refreshUser();
+      // Refresh AuthContext
+      await context.refreshUser();
 
-const role = response.data.role;
+      const role = response.data.role;
 
       // Redirect based on role
       if (role === "Admin" || role === "admin") {
@@ -91,6 +130,9 @@ const role = response.data.role;
     }
   };
 
+  // ============================================================
+  // UI
+  // ============================================================
   return (
     <div className="min-h-screen w-full bg-[var(--background)] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px] bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl shadow-sm px-7 py-8 sm:px-9 sm:py-10">

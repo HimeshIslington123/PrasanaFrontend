@@ -26,7 +26,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 // ============================================================
 
 async function getCategoryNews(
-  id: string
+  slug: string
 ): Promise<News[]> {
   if (!API_BASE) {
     throw new Error(
@@ -34,12 +34,12 @@ async function getCategoryNews(
     );
   }
 
-  const response = await fetch(
-    `${API_BASE}/news/${id}/byCategory`,
-    {
-      cache: "no-store",
-    }
-  );
+ const response = await fetch(
+  `${API_BASE}/News/${slug}/byCategory`,
+  {
+    cache: "no-store",
+  }
+);
 
   if (!response.ok) {
     throw new Error(
@@ -57,11 +57,11 @@ async function getCategoryNews(
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
 
-  const news = await getCategoryNews(id);
+  const news = await getCategoryNews(slug);
 
   const categoryName =
     news.length > 0
@@ -78,7 +78,7 @@ export async function generateMetadata({
 
     alternates: {
       canonical:
-        `https://www.prashnaa.com/category/${id}`,
+        `https://www.prashnaa.com/category/${slug}`,
     },
 
     openGraph: {
@@ -87,7 +87,7 @@ export async function generateMetadata({
       description,
 
       url:
-        `https://www.prashnaa.com/category/${id}`,
+        `https://www.prashnaa.com/category/${slug}`,
 
       siteName: "प्रश्ना न्यूज",
 
@@ -118,11 +118,15 @@ export async function generateMetadata({
 export default async function CategoryPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
 
-  const news = await getCategoryNews(id);
+  const news = await getCategoryNews(slug);
+
+  // ============================================================
+  // NO NEWS
+  // ============================================================
 
   if (!news || news.length === 0) {
     return (
