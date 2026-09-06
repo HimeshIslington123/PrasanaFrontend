@@ -63,6 +63,36 @@ export default function HomeNews({
 
   const [loading, setLoading] = useState(false);
 
+const [email, setEmail] = useState("");
+const [submittingEmail, setSubmittingEmail] = useState(false);
+const subscribeNewsletter = async () => {
+  if (!email.trim()) {
+    alert("कृपया आफ्नो ईमेल ठेगाना लेख्नुहोस्।");
+    return;
+  }
+
+  try {
+    setSubmittingEmail(true);
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!API_URL) {
+      throw new Error("NEXT_PUBLIC_API_URL is not configured");
+    }
+
+    await axios.post(`${API_URL}/Email`, {
+      email: email.trim(),
+    });
+
+    alert("न्यूजलेटरमा सफलतापूर्वक सदस्यता लिनुभयो।");
+    setEmail("");
+  } catch (error) {
+    console.error("Newsletter subscription failed:", error);
+    alert("सदस्यता लिन सकिएन। कृपया पुनः प्रयास गर्नुहोस्।");
+  } finally {
+    setSubmittingEmail(false);
+  }
+};
   const pageSize = 10;
 
   // ==========================================================
@@ -845,39 +875,44 @@ export default function HomeNews({
               </p>
 
               <input
-                type="email"
-                placeholder="तपाईंको ईमेल ठेगाना"
-                aria-label="तपाईंको ईमेल ठेगाना"
-                className="
-                  mt-4
-                  w-full
-                  border
-                  border-[#ead9d9]
-                  bg-white
-                  px-3
-                  py-3
-                  text-sm
-                  outline-none
-                  focus:border-[#6d001b]
-                "
-              />
-
-              <button
-                type="button"
-                className="
-                  mt-2
-                  w-full
-                  bg-[#6d001b]
-                  py-2.5
-                  font-[family-name:var(--font-devanagari)]
-                  text-xs
-                  font-bold
-                  text-white
-                  hover:opacity-90
-                "
-              >
-                सदस्यता लिने
-              </button>
+  type="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  placeholder="तपाईंको ईमेल ठेगाना"
+  aria-label="तपाईंको ईमेल ठेगाना"
+  className="
+    mt-4
+    w-full
+    border
+    border-[#ead9d9]
+    bg-white
+    px-3
+    py-3
+    text-sm
+    outline-none
+    focus:border-[#6d001b]
+  "
+/>
+<button
+  type="button"
+  onClick={subscribeNewsletter}
+  disabled={submittingEmail}
+  className="
+    mt-2
+    w-full
+    bg-[#6d001b]
+    py-2.5
+    font-[family-name:var(--font-devanagari)]
+    text-xs
+    font-bold
+    text-white
+    hover:opacity-90
+    disabled:cursor-not-allowed
+    disabled:opacity-50
+  "
+>
+  {submittingEmail ? "पठाउँदै..." : "सदस्यता लिने"}
+</button>
 
             </section>
 

@@ -69,10 +69,10 @@ export async function generateMetadata({
       : "समाचार";
 
   const description =
-    `${categoryName} सम्बन्धी ताजा तथा विश्वसनीय समाचारहरू प्रश्ना न्यूजमा पढ्नुहोस्।`;
+    `${categoryName} सम्बन्धी ताजा तथा विश्वसनीय समाचारहरू प्रश्न  न्यूजमा पढ्नुहोस्।`;
 
   return {
-    title: `${categoryName} | प्रश्ना न्यूज`,
+    title: `${categoryName} | प्रश्न न्यूज`,
 
     description,
 
@@ -89,7 +89,7 @@ export async function generateMetadata({
       url:
         `https://www.prashnaa.com/category/${slug}`,
 
-      siteName: "प्रश्ना न्यूज",
+      siteName: "प्रश्न  न्यूज",
 
       locale: "ne_NP",
 
@@ -99,7 +99,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
 
-      title: `${categoryName} | प्रश्ना न्यूज`,
+      title: `${categoryName} | प्रश्न  न्यूज`,
 
       description,
     },

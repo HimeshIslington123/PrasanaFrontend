@@ -122,7 +122,7 @@ export async function generateMetadata({
       ?.replace(/\s+/g, " ")
       .trim()
       .substring(0, 160) ||
-    "प्रश्ना न्यूजबाट पछिल्लो समाचार पढ्नुहोस्।";
+    "प्रश्न  न्यूजबाट पछिल्लो समाचार पढ्नुहोस्।";
 
   // ==========================================================
   // CANONICAL URL
@@ -156,7 +156,8 @@ export async function generateMetadata({
 
       url: canonicalUrl,
 
-      siteName: "प्रश्ना न्यूज",
+      siteName: "प्रश्न न्यूज ",
+
 
       locale: "ne_NP",
 
@@ -264,7 +265,7 @@ export default async function NewsDetailPage({
       ?.replace(/\s+/g, " ")
       .trim()
       .substring(0, 160) ||
-    "प्रश्ना न्यूजबाट पछिल्लो समाचार पढ्नुहोस्।";
+    "प्रश्न  न्यूजबाट पछिल्लो समाचार पढ्नुहोस्।";
 
   // ==========================================================
   // CANONICAL URL
@@ -323,7 +324,7 @@ export default async function NewsDetailPage({
         "Organization",
 
       name:
-        "प्रश्ना न्यूज",
+        "प्रश्न  न्यूज",
 
       url:
         "https://www.prashnaa.com/",

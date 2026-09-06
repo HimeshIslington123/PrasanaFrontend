@@ -15,7 +15,7 @@ export default function CookiesPage() {
         {" "}
         <p>
           {" "}
-          Prasna News ले प्रयोगकर्ता अनुभव सुधार गर्न तथा वेबसाइटलाई प्रभावकारी
+          Prashnaa News ले प्रयोगकर्ता अनुभव सुधार गर्न तथा वेबसाइटलाई प्रभावकारी
           रूपमा सञ्चालन गर्न कुकीज प्रयोग गर्न सक्छ।{" "}
         </p>{" "}
         <h2 className="text-2xl font-bold text-gray-900">

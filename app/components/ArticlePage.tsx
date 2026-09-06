@@ -69,7 +69,7 @@ export default function ArticlePage({
 
   category = "प्रविधि",
 
-  authorName = "प्रश्न समाचार ब्युरो",
+  authorName = "प्रश्न समाचार ",
 
   authorRole = "",
 
