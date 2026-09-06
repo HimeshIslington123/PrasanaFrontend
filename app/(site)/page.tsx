@@ -36,7 +36,7 @@ export type NewsResponse = {
 // ============================================================
 
 export const metadata: Metadata = {
- title: "प्रश्न न्यूज | ताजा तथा विश्वसनीय समाचार",
+  title: "प्रश्न न्यूज | ताजा तथा विश्वसनीय समाचार",
 
   description:
     "नेपालका ताजा तथा विश्वसनीय समाचार पढ्नुहोस्। राजनीति, समाज, अर्थतन्त्र, खेलकुद, मनोरञ्जन, प्रविधि तथा विश्वका नवीनतम समाचार।",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-   title: "प्रश्न न्यूज | ताजा तथा विश्वसनीय समाचार",
+    title: "प्रश्न न्यूज | ताजा तथा विश्वसनीय समाचार",
 
     description:
       "नेपालका ताजा तथा विश्वसनीय समाचार पढ्नुहोस्। राजनीति, समाज, अर्थतन्त्र, खेलकुद, मनोरञ्जन, प्रविधि तथा विश्व समाचार।",
@@ -73,16 +73,26 @@ export const metadata: Metadata = {
     locale: "ne_NP",
 
     type: "website",
+
+    images: [
+      {
+        url: "https://www.prashnaa.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "प्रश्न न्यूज",
+      },
+    ],
   },
 
   twitter: {
     card: "summary_large_image",
 
-    title:
-      "प्रश्न न्यूज| ताजा तथा विश्वसनीय समाचार",
+    title: "प्रश्न न्यूज | ताजा तथा विश्वसनीय समाचार",
 
     description:
       "नेपालका ताजा तथा विश्वसनीय समाचार पढ्नुहोस्।",
+
+    images: ["https://www.prashnaa.com/og-image.png"],
   },
 
   robots: {
@@ -90,7 +100,6 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
-
 // ============================================================
 // SERVER-SIDE NEWS FETCH
 // ============================================================
