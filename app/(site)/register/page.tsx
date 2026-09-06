@@ -107,7 +107,7 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="flex flex-col items-center mb-6">
           <Image
-            src="/logo.png"
+            src="/logo1.png"
             alt="प्रश्न"
             width={140}
             height={48}
