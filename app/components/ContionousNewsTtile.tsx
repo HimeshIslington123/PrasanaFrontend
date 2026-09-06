@@ -3,6 +3,7 @@ import NewsTitle from "./NewsTitle";
 type NewsDetails = {
   id: number;
   title: string;
+    slug: string;
 };
 
 const ContionousNewsTtile = async () => {

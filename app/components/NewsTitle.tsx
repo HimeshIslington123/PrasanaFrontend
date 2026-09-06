@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 type NewsDetails = {
   id: number;
   title: string;
+   slug: string;
 };
 
 type Props = {
@@ -15,7 +16,7 @@ const NewsTitle = ({ news }: Props) => {
   const router = useRouter();
 
   const handleOnClick = () => {
-    router.push(`/News/${news.id}`);
+    router.push(`/news/${news.slug}`);
   };
 
   return (
