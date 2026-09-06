@@ -266,7 +266,7 @@ export default function RegisterPage() {
         {/* Terms */}
         <p className="text-center text-xs text-[var(--secondary)] mt-3 leading-relaxed">
           By signing up, you agree to our{" "}
-          <Link href="/terms" className="underline">
+          <Link href="/privacy" className="underline">
             Terms of Service
           </Link>{" "}
           and{" "}

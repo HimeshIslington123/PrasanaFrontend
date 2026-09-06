@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import BlogCounter from "@/app/components/BlogCounter";
+import Image from "next/image";
 
 // ============================================================
 // TYPES
@@ -767,7 +768,13 @@ export default async function BlogDetailPage({
                     text-gray-400
                   "
                 >
-                  Advertisement
+              <Image
+      src="/ad7.jpeg"
+      alt="Advertisement"
+      width={1200}
+      height={250}
+      className="h-full w-full object-cover"
+    />
                 </div>
               </section>
 
@@ -794,7 +801,13 @@ export default async function BlogDetailPage({
                     text-gray-400
                   "
                 >
-                  Advertisement
+               <Image
+      src="/ad6.jpeg"
+      alt="Advertisement"
+      width={1200}
+      height={250}
+      className="h-full w-full object-cover"
+    />
                 </div>
               </section>
 

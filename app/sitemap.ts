@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const baseUrl = "https://www.prashnaa.com";
+const apiUrl = "https://api.prashnaa.com";
 
 type News = {
   id: number;
@@ -8,65 +9,120 @@ type News = {
   created: string;
 };
 
+type Blog = {
+  id: number;
+  slug: string;
+  date: string;
+};
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "daily",
       priority: 1,
     },
     {
       url: `${baseUrl}/aboutus`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/Advertise`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
   ];
 
+  let newsPages: MetadataRoute.Sitemap = [];
+  let blogPages: MetadataRoute.Sitemap = [];
+
+  // =========================
+  // NEWS
+  // =========================
+
   try {
-    const response = await fetch(
-      "https://learningcl-cd-4.onrender.com/news",
-      {
-        next: {
-          revalidate: 3600,
-        },
-      }
-    );
+    const response = await fetch(`${apiUrl}/news`, {
+      next: {
+        revalidate: 3600,
+      },
+    });
 
-    if (!response.ok) {
-      console.error(
-        "Sitemap API failed:",
-        response.status
-      );
+    if (response.ok) {
+      const result = await response.json();
 
-      return staticPages;
+      const news: News[] = result.data ?? [];
+
+      newsPages = news
+        .filter((item) => item.slug)
+        .map((item) => ({
+          url: `${baseUrl}/news/${item.slug}`,
+          lastModified: new Date(item.created),
+          changeFrequency: "daily" as const,
+          priority: 0.8,
+        }));
+    } else {
+      console.error("News sitemap API failed:", response.status);
     }
-
-    const result = await response.json();
-
-    // Your API returns { data: [...] }
-    const news: News[] = result.data ?? [];
-
-    const newsPages: MetadataRoute.Sitemap = news
-      .filter((item) => item.slug)
-      .map((item) => ({
-        url: `${baseUrl}/news/${item.slug}`,
-        lastModified: new Date(item.created),
-        changeFrequency: "daily" as const,
-        priority: 0.8,
-      }));
-
-    return [
-      ...staticPages,
-      ...newsPages,
-    ];
   } catch (error) {
-    console.error(
-      "Failed to generate sitemap:",
-      error
-    );
-
-    return staticPages;
+    console.error("Failed to fetch news for sitemap:", error);
   }
+
+  // =========================
+  // BLOG
+  // =========================
+
+  try {
+    const response = await fetch(`${apiUrl}/blog`, {
+      next: {
+        revalidate: 3600,
+      },
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      // Your /blog API appears to return an array.
+      // This also supports { data: [...] } just in case.
+      const blogs: Blog[] = Array.isArray(result)
+        ? result
+        : result.data ?? [];
+
+      blogPages = blogs
+        .filter((item) => item.slug)
+        .map((item) => ({
+          url: `${baseUrl}/blog/${item.slug}`,
+          lastModified: new Date(item.date),
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        }));
+    } else {
+      console.error("Blog sitemap API failed:", response.status);
+    }
+  } catch (error) {
+    console.error("Failed to fetch blogs for sitemap:", error);
+  }
+
+  return [
+    ...staticPages,
+    ...newsPages,
+    ...blogPages,
+  ];
 }

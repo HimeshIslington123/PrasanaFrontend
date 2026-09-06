@@ -42,6 +42,7 @@ const categories = [
   { name: "खेलकुद", href: "/category/sports" },
 
    { name: "साहित्य", href: "/category/literature" },
+      { name: "ब्लग", href: "/blog" }
   
 ];
 

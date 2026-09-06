@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Mail,
 } from "lucide-react";
+import Image from "next/image";
 
 // ============================================================
 // TYPES
@@ -795,28 +796,24 @@ export default function BlogPage() {
                 AD
             ================================================== */}
 
-            <section
-              className="
-                overflow-hidden
-                border
-                border-[#ead9d9]
-                bg-[#fffdfc]
-              "
-            >
-              <div
-                className="
-                  flex
-                  h-[250px]
-                  items-center
-                  justify-center
-                  bg-[#f3eeee]
-                  text-xs
-                  text-gray-400
-                "
-              >
-                Advertisement
-              </div>
-            </section>
+           <section
+  className="
+    overflow-hidden
+    border-2
+    border-[#ead9d9]
+    bg-[#fffdfc]
+  "
+>
+  <div className="h-[250px] w-full">
+    <Image
+      src="/ad3.png"
+      alt="Advertisement"
+      width={1200}
+      height={250}
+      className="h-full w-full object-cover"
+    />
+  </div>
+</section>
 
             {/* =================================================
                 POPULAR BLOGS
