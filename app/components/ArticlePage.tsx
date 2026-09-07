@@ -504,7 +504,7 @@ export default function ArticlePage({
           error.response?.status ===
           401
         ) {
-          router.push("/Login");
+          router.push("/login");
 
           return;
         }

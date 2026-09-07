@@ -199,12 +199,12 @@ export default function LoginPage() {
                 पासवर्ड
               </label>
 
-              <Link
+              {/* <Link
                 href="/forgot-password"
                 className="text-sm font-semibold text-[var(--primary)] hover:underline"
               >
                 पासवर्ड बिर्सनुभयो?
-              </Link>
+              </Link> */}
             </div>
 
             <div className="relative">
